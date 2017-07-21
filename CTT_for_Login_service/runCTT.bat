@@ -1,0 +1,1 @@
+java -classpath "target\CTT_for_Login_service-jar-with-dependencies.jar" esa.mo.nmf.ctt.guis.ConsumerTestToolGUILoginService

@@ -1,0 +1,5 @@
+**/**/target/
+**/target/
+**/providerURIs.properties
+**/comArchive.db
+**/comArchive.db-journal
