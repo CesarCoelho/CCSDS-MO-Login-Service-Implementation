@@ -18,37 +18,36 @@
  * limitations under the License. 
  * ----------------------------------------------------------------------------
  */
-package esa.mo.nmf.ctt.utils;
+package esa.mo.nmf.ctt.services.common;
 
-import esa.mo.nmf.ctt.services.common.LoginConsumerPanel;
-import org.ccsds.moims.mo.common.directory.structures.ProviderSummary;
+import esa.mo.com.impl.consumer.ArchiveConsumerServiceImpl;
+import esa.mo.com.impl.provider.ArchivePersistenceObject;
+import esa.mo.nmf.ctt.utils.SharedTablePanel;
+import org.ccsds.moims.mo.mal.structures.Identifier;
 
 /**
  *
- * @author Cesar Coelho
+ * @author Andreea Pirvulescu
  */
-public class ProviderTabPanelLogin extends ProviderTabPanel {
+public class LoginTablePanel extends SharedTablePanel {
 
-    /**
-     * Creates a new tab for a Provider and populates it.
-     *
-     * @param provider
-     */
-    public ProviderTabPanelLogin(final ProviderSummary provider) {
-        super(provider);
+    public LoginTablePanel(ArchiveConsumerServiceImpl archiveService) {
+        super(archiveService);
     }
 
     @Override
-    public void insertServicesTabs() {
-        // To do: Insert the Login service Consumer tab here!
-        // Check how it is done inside the startTabs() method for exmaples
-        if (this.services.getCommonServices() != null) {
-            if (this.services.getCommonServices().getLoginService() != null) {
-                LoginConsumerPanel panel = new LoginConsumerPanel(this.services.getCommonServices().getLoginService());
-            }
-        }
-        //startTabs();
+    public void addEntry(Identifier defName, ArchivePersistenceObject comObject) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
+    @Override
+    public void defineTableContent() {
+        String[] loginTableCol = new String[] {"Login"};
+        tableData = new javax.swing.table.DefaultTableModel(new Object[][]{}, loginTableCol) {
+            Class[] types = new Class[]{
+                java.lang.String.class
+            };
+        };
+    }
     
 }
