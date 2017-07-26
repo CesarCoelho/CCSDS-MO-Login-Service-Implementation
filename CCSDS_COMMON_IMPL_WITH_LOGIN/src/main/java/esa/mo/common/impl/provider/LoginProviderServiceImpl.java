@@ -24,6 +24,14 @@ import esa.mo.com.impl.util.COMServicesProvider;
 import esa.mo.helpertools.connections.ConnectionProvider;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.*;
+import org.apache.shiro.config.IniSecurityManagerFactory;
+import org.apache.shiro.mgt.SecurityManager;
+import org.apache.shiro.session.Session;
+import org.apache.shiro.subject.Subject;
+import org.apache.shiro.util.Factory;
+import org.slf4j.LoggerFactory;
 import org.ccsds.moims.mo.com.COMHelper;
 import org.ccsds.moims.mo.com.COMService;
 import org.ccsds.moims.mo.common.CommonHelper;
@@ -36,6 +44,7 @@ import org.ccsds.moims.mo.mal.MALContextFactory;
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.MALHelper;
 import org.ccsds.moims.mo.mal.MALInteractionException;
+import org.ccsds.moims.mo.mal.MALStandardError;
 import org.ccsds.moims.mo.mal.provider.MALInteraction;
 import org.ccsds.moims.mo.mal.provider.MALProvider;
 import org.ccsds.moims.mo.mal.structures.Identifier;
@@ -53,7 +62,12 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
     private boolean running = false;
     private final ConnectionProvider connection = new ConnectionProvider();
     private COMServicesProvider comServices;
-
+    
+      
+    // load shiro configuration
+    private final Factory<SecurityManager> factory = new IniSecurityManagerFactory("classpath:shiro.ini");
+    private final SecurityManager securityManager = factory.getInstance();
+    
     /**
      * creates the MAL objects, the publisher used to create updates and starts
      * the publishing thread
@@ -87,6 +101,9 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
         if (null != loginServiceProvider) {
             connection.closeAll();
         }
+        
+        // set the SecurityManager
+        SecurityUtils.setSecurityManager(securityManager);
 
         service = LoginHelper.LOGIN_SERVICE;
         loginServiceProvider = connection.startService(LoginHelper.LOGIN_SERVICE_NAME.toString(), 
@@ -117,7 +134,53 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
 
     @Override
     public LoginResponse login(Profile prfl, String string, MALInteraction mali) throws MALInteractionException, MALException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (prfl == null) {
+            throw new IllegalArgumentException("profile argument must not be null");
+        }
+        
+        Identifier inputUsername = prfl.getUsername(); 
+        Long inputRole = prfl.getRole();
+        
+        if (inputUsername.toString().equals("*") || inputUsername.toString().isEmpty()) {
+            throw new MALInteractionException(new MALStandardError(COMHelper.INVALID_ERROR_NUMBER, null));
+        }
+        
+        // TODO
+        // check if roles are used by the system
+        if (inputRole == null) {
+            throw new MALInteractionException(new MALStandardError(COMHelper.INVALID_ERROR_NUMBER, null));
+        }
+        
+        // get the currently executing user
+        Subject currentUser = SecurityUtils.getSubject();
+        
+        // login the current user to check against roles
+        if (!currentUser.isAuthenticated()) {
+            // I supposed the password is plain text for now
+            UsernamePasswordToken token = new UsernamePasswordToken(inputUsername.toString(), string);
+            token.setRememberMe(true);
+            try {
+                currentUser.login(token);
+            } catch (UnknownAccountException uae) {
+                // unknown user
+                throw new MALInteractionException(new MALStandardError(MALHelper.UNKNOWN_ERROR_NUMBER, null));
+            } catch (IncorrectCredentialsException ice) {
+                // username, password and role are not correct
+                throw new MALInteractionException(new MALStandardError(MALHelper.UNKNOWN_ERROR_NUMBER, null));
+            } catch (ConcurrentAccessException cae) {
+                // username and role are currently in use
+                throw new MALInteractionException(new MALStandardError(COMHelper.DUPLICATE_ERROR_NUMBER, null));
+            } catch (ExcessiveAttemptsException eae) {
+                // too many attempts to login(not sure this is needed)
+                throw new MALInteractionException(new MALStandardError(MALHelper.TOO_MANY_ERROR_NUMBER, null));
+            } catch (AuthenticationException ae) {
+                //unexpected condition?  error?
+            }
+        }
+        
+       return null;
+        
+        
     }
 
     @Override
