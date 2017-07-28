@@ -55,7 +55,7 @@ public class ConsumerTestToolGUILoginService extends ConsumerTestToolGUI {
             }
         });
     }
-
+    
     public ConsumerTestToolGUILoginService(final String name) {
         super(name);
         this.insertDirectoryServiceTab("");        
