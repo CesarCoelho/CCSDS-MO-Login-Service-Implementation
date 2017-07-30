@@ -21,6 +21,7 @@
 package esa.mo.nmf.ctt.utils;
 
 import esa.mo.nmf.ctt.services.common.LoginConsumerPanel;
+import javax.swing.JTabbedPane;
 import org.ccsds.moims.mo.common.directory.structures.ProviderSummary;
 
 /**
@@ -28,7 +29,9 @@ import org.ccsds.moims.mo.common.directory.structures.ProviderSummary;
  * @author Cesar Coelho
  */
 public class ProviderTabPanelLogin extends ProviderTabPanel {
-
+    
+    final JTabbedPane tabs = super.getTabs(); //ProviderTabPanel needs getTabs()
+    
     /**
      * Creates a new tab for a Provider and populates it.
      *
@@ -45,9 +48,13 @@ public class ProviderTabPanelLogin extends ProviderTabPanel {
         if (this.services.getCommonServices() != null) {
             if (this.services.getCommonServices().getLoginService() != null) {
                 LoginConsumerPanel panel = new LoginConsumerPanel(this.services.getCommonServices().getLoginService());
+                int count = tabs.getTabCount();
+                tabs.insertTab("Login service", null, panel, "Login Tab", count);
+                if (panel.isAuthenticated()) {
+                    startTabs();
+                }
             }
         }
-        //startTabs();
     }
     
     

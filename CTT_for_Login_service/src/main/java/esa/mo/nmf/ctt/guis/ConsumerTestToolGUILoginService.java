@@ -20,9 +20,14 @@
  */
 package esa.mo.nmf.ctt.guis;
 
+import esa.mo.nmf.ctt.utils.DirectoryConnectionConsumerPanel;
+import esa.mo.nmf.ctt.utils.ProviderTabPanel;
+import esa.mo.nmf.ctt.utils.ProviderTabPanelLogin;
 import java.awt.EventQueue;
+import javax.swing.JTabbedPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import org.ccsds.moims.mo.common.directory.structures.ProviderSummary;
 
 /**
  * This class provides a simple form for the control of the consumer.
@@ -58,7 +63,24 @@ public class ConsumerTestToolGUILoginService extends ConsumerTestToolGUI {
     
     public ConsumerTestToolGUILoginService(final String name) {
         super(name);
-        this.insertDirectoryServiceTab("");        
+        this.insertDirectoryServiceTabWithLogin("");
+    }
+    
+    public final void insertDirectoryServiceTabWithLogin(final String defaultURI) {
+        final JTabbedPane tabs = super.getTabs();
+        System.out.println("Hellp");
+        final DirectoryConnectionConsumerPanel directoryTab = new DirectoryConnectionConsumerPanel(false, connection, tabs) {
+            @Override
+            public ProviderTabPanel createNewProviderTabPanel(final ProviderSummary providerSummary) {
+                return new ProviderTabPanelLogin(providerSummary);
+            }
+        };
+
+        tabs.insertTab("Communication Settings (Directory)", null,
+                directoryTab,
+                "Communications Tab (Directory)", tabs.getTabCount());
+
+        directoryTab.setURITextbox(defaultURI);
     }
 
 }

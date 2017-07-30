@@ -23,6 +23,8 @@ package esa.mo.nmf.ctt.services.common;
 import esa.mo.com.impl.consumer.ArchiveConsumerServiceImpl;
 import esa.mo.com.impl.provider.ArchivePersistenceObject;
 import esa.mo.nmf.ctt.utils.SharedTablePanel;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.ccsds.moims.mo.mal.structures.Identifier;
 
 /**
@@ -37,17 +39,33 @@ public class LoginTablePanel extends SharedTablePanel {
 
     @Override
     public void addEntry(Identifier defName, ArchivePersistenceObject comObject) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (comObject == null){
+            Logger.getLogger(SharedTablePanel.class.getName()).log(Level.SEVERE, "The table cannot process a null COM Object.");
+            return;
+        }
+
+        try {
+            semaphore.acquire();
+        } catch (InterruptedException ex) {
+            Logger.getLogger(SharedTablePanel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+       
+        tableData.addRow(new Object[] {
+           defName
+        });
+        
+        semaphore.release();
     }
 
     @Override
     public void defineTableContent() {
-        String[] loginTableCol = new String[] {"Login"};
+        String[] loginTableCol = new String[] {"User"};
         tableData = new javax.swing.table.DefaultTableModel(new Object[][]{}, loginTableCol) {
             Class[] types = new Class[]{
                 java.lang.String.class
             };
         };
+        super.getTable().setModel(tableData);
     }
     
 }

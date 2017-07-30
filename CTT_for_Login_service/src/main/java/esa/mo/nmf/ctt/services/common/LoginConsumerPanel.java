@@ -15,6 +15,7 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
     
     private final LoginConsumerServiceImpl serviceCommonLogin;
     private final LoginTablePanel loginTable;
+    private final boolean authenticationStatus = true;
 
     /**
      * Creates new form LoginConsumerPanel
@@ -24,6 +25,10 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         initComponents();
         this.serviceCommonLogin = serviceCommonLogin;
         loginTable = new LoginTablePanel(serviceCommonLogin.getCOMServices().getArchiveService());
+    }
+    
+    public boolean isAuthenticated() {
+        return authenticationStatus;
     }
 
     /**
@@ -35,19 +40,30 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jLabel1 = new javax.swing.JLabel();
+
+        jLabel1.setText("Login Service");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(166, 166, 166)
+                .addComponent(jLabel1)
+                .addContainerGap(195, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel1)
+                .addContainerGap(275, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel jLabel1;
     // End of variables declaration//GEN-END:variables
 }
