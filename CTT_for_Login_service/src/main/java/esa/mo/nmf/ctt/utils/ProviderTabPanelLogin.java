@@ -50,9 +50,14 @@ public class ProviderTabPanelLogin extends ProviderTabPanel {
                 LoginConsumerPanel panel = new LoginConsumerPanel(this.services.getCommonServices().getLoginService());
                 int count = tabs.getTabCount();
                 tabs.insertTab("Login service", null, panel, "Login Tab", count);
-                if (panel.isAuthenticated()) {
-                    startTabs();
+                while (!panel.isAuthenticated()) {
+                    panel.repaint();
+                    if (panel.isAuthenticated()) {
+                        startTabs();
+                        return;
+                    }
                 }
+                
             }
         }
     }

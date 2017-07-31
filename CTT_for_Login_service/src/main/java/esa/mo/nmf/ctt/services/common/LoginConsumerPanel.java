@@ -6,6 +6,13 @@
 package esa.mo.nmf.ctt.services.common;
 
 import esa.mo.common.impl.consumer.LoginConsumerServiceImpl;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.ccsds.moims.mo.common.login.body.LoginResponse;
+import org.ccsds.moims.mo.common.login.structures.Profile;
+import org.ccsds.moims.mo.mal.MALException;
+import org.ccsds.moims.mo.mal.MALInteractionException;
+import org.ccsds.moims.mo.mal.structures.Identifier;
 
 /**
  *
@@ -15,7 +22,7 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
     
     private final LoginConsumerServiceImpl serviceCommonLogin;
     private final LoginTablePanel loginTable;
-    private final boolean authenticationStatus = true;
+    private boolean authenticationStatus = false;
 
     /**
      * Creates new form LoginConsumerPanel
@@ -43,7 +50,7 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         usernameField = new javax.swing.JTextField();
-        jButton1 = new javax.swing.JButton();
+        login = new javax.swing.JButton();
         passwordField = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
         roleField = new javax.swing.JTextField();
@@ -52,21 +59,19 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
 
         jLabel2.setText("Password");
 
-        usernameField.setText("jTextField1");
         usernameField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 usernameFieldActionPerformed(evt);
             }
         });
 
-        jButton1.setText("Login");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        login.setText("Login");
+        login.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                loginActionPerformed(evt);
             }
         });
 
-        passwordField.setText("jTextField1");
         passwordField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 passwordFieldActionPerformed(evt);
@@ -75,7 +80,6 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
 
         jLabel3.setText("Role");
 
-        roleField.setText("jTextField1");
         roleField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 roleFieldActionPerformed(evt);
@@ -90,16 +94,15 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
                 .addGap(92, 92, 92)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, 68, Short.MAX_VALUE)
+                        .addComponent(login, javax.swing.GroupLayout.DEFAULT_SIZE, 68, Short.MAX_VALUE)
                         .addComponent(jLabel2)
                         .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(27, 27, 27)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(roleField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(usernameField, javax.swing.GroupLayout.DEFAULT_SIZE, 111, Short.MAX_VALUE)
-                        .addComponent(passwordField)))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(usernameField)
+                    .addComponent(passwordField, javax.swing.GroupLayout.DEFAULT_SIZE, 111, Short.MAX_VALUE)
+                    .addComponent(roleField))
                 .addContainerGap(126, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -114,11 +117,11 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
                     .addComponent(jLabel3)
                     .addComponent(roleField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(passwordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(passwordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel2))
                 .addGap(27, 27, 27)
-                .addComponent(jButton1)
+                .addComponent(login)
                 .addContainerGap(69, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -127,13 +130,28 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         // TODO add your handling code here:
     }//GEN-LAST:event_usernameFieldActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void loginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loginActionPerformed
         // TODO add your handling code here:
-        String username = usernameField.getText();
-        String role = roleField.getText();
+        Identifier username = new Identifier(usernameField.getText());
+        Long role = Long.valueOf(roleField.getText());
         String password = passwordField.getText();
         
-    }//GEN-LAST:event_jButton1ActionPerformed
+        Profile profile = new Profile(username, role);
+        
+        LoginResponse loginResponse;
+        try {
+            loginResponse = this.serviceCommonLogin.getLoginStub().login(profile, password);
+            if (loginResponse != null) {
+                authenticationStatus = true;
+            }
+        } catch (MALInteractionException ex) {
+            Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (MALException ex) {
+            Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        
+    }//GEN-LAST:event_loginActionPerformed
 
     private void roleFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_roleFieldActionPerformed
         // TODO add your handling code here:
@@ -145,10 +163,10 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JButton login;
     private javax.swing.JTextField passwordField;
     private javax.swing.JTextField roleField;
     private javax.swing.JTextField usernameField;

@@ -68,7 +68,6 @@ public class ConsumerTestToolGUILoginService extends ConsumerTestToolGUI {
     
     public final void insertDirectoryServiceTabWithLogin(final String defaultURI) {
         final JTabbedPane tabs = super.getTabs();
-        System.out.println("Hellp");
         final DirectoryConnectionConsumerPanel directoryTab = new DirectoryConnectionConsumerPanel(false, connection, tabs) {
             @Override
             public ProviderTabPanel createNewProviderTabPanel(final ProviderSummary providerSummary) {
