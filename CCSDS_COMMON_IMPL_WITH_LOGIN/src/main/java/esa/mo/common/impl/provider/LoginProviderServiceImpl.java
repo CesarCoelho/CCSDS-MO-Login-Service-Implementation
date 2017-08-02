@@ -141,20 +141,20 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
     @Override
     public LoginResponse login(Profile prfl, String string, MALInteraction mali) throws MALInteractionException, MALException {
         
+        // 3.3.7.2.a
         if (prfl == null) {
             throw new IllegalArgumentException("profile argument must not be null");
         }
         
         Identifier inputUsername = prfl.getUsername(); 
         Long inputRole = prfl.getRole();
-        System.out.println(inputUsername);
-        System.out.println(inputRole);
+        
+        // 3.3.7.2.b
         if (inputUsername.toString().equals("*") || inputUsername.toString().isEmpty()) {
             throw new MALInteractionException(new MALStandardError(COMHelper.INVALID_ERROR_NUMBER, null));
         }
         
-        // TODO
-        // check if roles are used by the system
+        // 3.3.7.2.c
         if (inputRole == null) {
             throw new MALInteractionException(new MALStandardError(COMHelper.INVALID_ERROR_NUMBER, null));
         }
@@ -170,22 +170,22 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
             try {
                 currentUser.login(token);
             } catch (UnknownAccountException uae) {
-                // unknown user
+                // 3.3.7.2.e - unknown user
                 throw new MALInteractionException(new MALStandardError(MALHelper.UNKNOWN_ERROR_NUMBER, null));
             } catch (IncorrectCredentialsException ice) {
-                // username, password and role are not correct
+                // 3.3.7.2.e - username, password and role are not correct
                 throw new MALInteractionException(new MALStandardError(MALHelper.UNKNOWN_ERROR_NUMBER, null));
             } catch (ConcurrentAccessException cae) {
-                // username and role are currently in use
+                // 3.3.7.2.f - username and role are currently in use
                 throw new MALInteractionException(new MALStandardError(COMHelper.DUPLICATE_ERROR_NUMBER, null));
             } catch (ExcessiveAttemptsException eae) {
-                // too many attempts to login(not sure this is needed)
+                // 3.3.7.2.g - too many attempts to login(not sure this is needed)
                 throw new MALInteractionException(new MALStandardError(MALHelper.TOO_MANY_ERROR_NUMBER, null));
             } catch (AuthenticationException ae) {
                 //unexpected condition?  error?
             }
             
-            //LoginRole
+            // LoginRole
             IdentifierList usernames = new IdentifierList();
             usernames.add(inputUsername);
             LongList roleIds = this.comServices.getArchiveService().store(true,
@@ -197,28 +197,30 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                     usernames,
                     mali);
         
-            //LoginInstance
+            // 3.3.7.2.h - LoginInstance
             ProfileList profiles = new ProfileList();
             profiles.add(prfl);
             LongList instanceIds = this.comServices.getArchiveService().store(true,
                     LoginHelper.LOGININSTANCE_OBJECT_TYPE,
                     connection.getPrimaryConnectionDetails().getDomain(),
-                    HelperArchive.generateArchiveDetailsList(roleIds.get(0),
-                            null, //???
+                    HelperArchive.generateArchiveDetailsList(roleIds.get(0), // 3.3.7.2.i
+                            null, // 3.3.3.f
                             connection.getPrimaryConnectionDetails().getProviderURI()),
                     profiles,
                     mali);
                 
-            //LoginEvent
+            // 3.3.7.2.j - LoginEvent
             Long loginEvent = this.comServices.getEventService().generateAndStoreEvent(
                     LoginHelper.LOGINEVENT_OBJECT_TYPE,
                     connection.getPrimaryConnectionDetails().getDomain(),
                     null,
-                    instanceIds.get(0),
+                    instanceIds.get(0), // 3.3.4.f
                     null,
                     mali);
-            Blob authID = this.loginServiceProvider.getBrokerAuthenticationId();
-            LoginResponse response = new LoginResponse(authID, instanceIds.get(0));
+            
+            Blob authId = this.loginServiceProvider.getBrokerAuthenticationId(); // 3.3.7.2.k
+            LoginResponse response = new LoginResponse(authId, instanceIds.get(0)); // 3.3.7.2.l
+            
             return response;  
         }
           
