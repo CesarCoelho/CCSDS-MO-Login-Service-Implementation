@@ -20,6 +20,7 @@
  */
 package esa.mo.common.impl.provider;
 
+import esa.mo.com.impl.provider.ArchivePersistenceObject;
 import esa.mo.com.impl.util.COMServicesProvider;
 import esa.mo.com.impl.util.HelperArchive;
 import esa.mo.helpertools.connections.ConfigurationProviderSingleton;
@@ -36,7 +37,10 @@ import org.apache.shiro.util.Factory;
 import org.slf4j.LoggerFactory;
 import org.ccsds.moims.mo.com.COMHelper;
 import org.ccsds.moims.mo.com.COMService;
+import org.ccsds.moims.mo.com.structures.ObjectId;
 import org.ccsds.moims.mo.com.structures.ObjectIdList;
+import org.ccsds.moims.mo.com.structures.ObjectKey;
+import org.ccsds.moims.mo.com.structures.ObjectType;
 import org.ccsds.moims.mo.common.CommonHelper;
 import org.ccsds.moims.mo.common.login.LoginHelper;
 import org.ccsds.moims.mo.common.login.body.HandoverResponse;
@@ -67,8 +71,9 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
     private boolean initialiased = false;
     private boolean running = false;
     private final ConnectionProvider connection = new ConnectionProvider();
-    private COMServicesProvider comServices;
-    
+    private COMServicesProvider comServices; 
+    private Long loginInstanceId;
+    private Long loginEventId;
       
     // load shiro configuration
     private final Factory<SecurityManager> factory = new IniSecurityManagerFactory("classpath:shiro.ini");
@@ -166,9 +171,49 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
         if (!currentUser.isAuthenticated()) {
             // I supposed the password is plain text for now
             UsernamePasswordToken token = new UsernamePasswordToken(inputUsername.toString(), string);
-            token.setRememberMe(true);
+            //token.setRememberMe(true);
             try {
                 currentUser.login(token);
+                
+                // 3.3.3.b - LoginRole
+                IdentifierList usernames = new IdentifierList();
+                usernames.add(inputUsername);
+                LongList roleIds = this.comServices.getArchiveService().store(true, 
+                        LoginHelper.LOGINROLE_OBJECT_TYPE,
+                        connection.getPrimaryConnectionDetails().getDomain(),
+                        HelperArchive.generateArchiveDetailsList(null, 
+                                null,
+                                this.connection.getPrimaryConnectionDetails().getProviderURI()),
+                        usernames,
+                        mali);
+        
+                // 3.3.7.2.h - LoginInstance
+                ProfileList profiles = new ProfileList();
+                profiles.add(prfl);
+                LongList loginInstanceIds = this.comServices.getArchiveService().store(true, 
+                        LoginHelper.LOGININSTANCE_OBJECT_TYPE,
+                        connection.getPrimaryConnectionDetails().getDomain(),
+                        HelperArchive.generateArchiveDetailsList(roleIds.get(0), // 3.3.3.e, 3.3.7.2.i
+                                null, // 3.3.3.f
+                                this.connection.getPrimaryConnectionDetails().getProviderURI()),
+                        profiles,
+                        mali);
+                this.loginInstanceId = loginInstanceIds.get(0);
+                
+                // 3.3.7.2.j - LoginEvent
+                Long loginEvent = this.comServices.getEventService().generateAndStoreEvent(
+                        LoginHelper.LOGINEVENT_OBJECT_TYPE,
+                        this.connection.getPrimaryConnectionDetails().getDomain(),
+                        null,
+                        loginInstanceId, // 3.3.4.d
+                        null, // 3.3.4.f
+                        mali);
+                this.loginEventId = loginEvent;
+            
+                Blob authId = this.loginServiceProvider.getBrokerAuthenticationId(); // 3.3.7.2.k
+                LoginResponse response = new LoginResponse(authId, loginInstanceId); // 3.3.7.2.l
+                return response;
+                
             } catch (UnknownAccountException uae) {
                 // 3.3.7.2.e - unknown user
                 throw new MALInteractionException(new MALStandardError(MALHelper.UNKNOWN_ERROR_NUMBER, null));
@@ -184,44 +229,6 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
             } catch (AuthenticationException ae) {
                 //unexpected condition?  error?
             }
-            
-            // LoginRole
-            IdentifierList usernames = new IdentifierList();
-            usernames.add(inputUsername);
-            LongList roleIds = this.comServices.getArchiveService().store(true,
-                    LoginHelper.LOGINROLE_OBJECT_TYPE,
-                    connection.getPrimaryConnectionDetails().getDomain(),
-                    HelperArchive.generateArchiveDetailsList(null,
-                            null,
-                            connection.getPrimaryConnectionDetails().getProviderURI()),
-                    usernames,
-                    mali);
-        
-            // 3.3.7.2.h - LoginInstance
-            ProfileList profiles = new ProfileList();
-            profiles.add(prfl);
-            LongList instanceIds = this.comServices.getArchiveService().store(true,
-                    LoginHelper.LOGININSTANCE_OBJECT_TYPE,
-                    connection.getPrimaryConnectionDetails().getDomain(),
-                    HelperArchive.generateArchiveDetailsList(roleIds.get(0), // 3.3.7.2.i
-                            null, // 3.3.3.f
-                            connection.getPrimaryConnectionDetails().getProviderURI()),
-                    profiles,
-                    mali);
-                
-            // 3.3.7.2.j - LoginEvent
-            Long loginEvent = this.comServices.getEventService().generateAndStoreEvent(
-                    LoginHelper.LOGINEVENT_OBJECT_TYPE,
-                    connection.getPrimaryConnectionDetails().getDomain(),
-                    null,
-                    instanceIds.get(0), // 3.3.4.f
-                    null,
-                    mali);
-            
-            Blob authId = this.loginServiceProvider.getBrokerAuthenticationId(); // 3.3.7.2.k
-            LoginResponse response = new LoginResponse(authId, instanceIds.get(0)); // 3.3.7.2.l
-            
-            return response;  
         }
           
         return null; 
@@ -229,7 +236,26 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
 
     @Override
     public void logout(MALInteraction mali) throws MALInteractionException, MALException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+       
+        // get the currently executing user
+        Subject currentUser = SecurityUtils.getSubject();
+        // logout the user
+        currentUser.logout();
+
+        ObjectKey key = new ObjectKey(
+                this.connection.getPrimaryConnectionDetails().getDomain(), 
+                this.loginEventId);
+        ObjectType type = new ObjectType();
+        ObjectId objId = new ObjectId(type, key);
+        
+        // 3.3.8.2.b - LogoutEvent
+        Long logoutEvent = this.comServices.getEventService().generateAndStoreEvent(
+                LoginHelper.LOGOUTEVENT_OBJECT_TYPE,
+                connection.getPrimaryConnectionDetails().getDomain(),
+                null,
+                this.loginInstanceId, // 3.3.4.e
+                objId, // 3.3.4.g
+                mali);
     }
 
     @Override
