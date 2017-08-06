@@ -20,10 +20,8 @@
  */
 package esa.mo.common.impl.provider;
 
-import esa.mo.com.impl.provider.ArchivePersistenceObject;
 import esa.mo.com.impl.util.COMServicesProvider;
 import esa.mo.com.impl.util.HelperArchive;
-import esa.mo.helpertools.connections.ConfigurationProviderSingleton;
 import esa.mo.helpertools.connections.ConnectionProvider;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -31,14 +29,11 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.config.IniSecurityManagerFactory;
 import org.apache.shiro.mgt.SecurityManager;
-import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.Factory;
-import org.slf4j.LoggerFactory;
 import org.ccsds.moims.mo.com.COMHelper;
 import org.ccsds.moims.mo.com.COMService;
 import org.ccsds.moims.mo.com.structures.ObjectId;
-import org.ccsds.moims.mo.com.structures.ObjectIdList;
 import org.ccsds.moims.mo.com.structures.ObjectKey;
 import org.ccsds.moims.mo.com.structures.ObjectType;
 import org.ccsds.moims.mo.common.CommonHelper;
@@ -169,7 +164,6 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
         
         // login the current user to check against roles
         if (!currentUser.isAuthenticated()) {
-            // I supposed the password is plain text for now
             UsernamePasswordToken token = new UsernamePasswordToken(inputUsername.toString(), string);
             //token.setRememberMe(true);
             try {
@@ -239,6 +233,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
        
         // get the currently executing user
         Subject currentUser = SecurityUtils.getSubject();
+        
         // logout the user
         currentUser.logout();
 
@@ -260,7 +255,12 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
 
     @Override
     public LongList listRoles(Identifier idntfr, String string, MALInteraction mali) throws MALInteractionException, MALException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        
+        // get the currently executing user
+        Subject currentUser = SecurityUtils.getSubject();
+        
+        
+        return null;
     }
 
     @Override
