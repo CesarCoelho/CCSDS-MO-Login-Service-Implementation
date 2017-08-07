@@ -22,11 +22,14 @@ package esa.mo.common.impl.provider;
 
 import esa.mo.com.impl.util.COMServicesProvider;
 import esa.mo.com.impl.util.HelperArchive;
+import esa.mo.common.impl.util.LoginServiceSecurityUtils;
 import esa.mo.helpertools.connections.ConnectionProvider;
+import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
+import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.config.IniSecurityManagerFactory;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.subject.Subject;
@@ -203,7 +206,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                         null, // 3.3.4.f
                         mali);
                 this.loginEventId = loginEvent;
-            
+                
                 Blob authId = this.loginServiceProvider.getBrokerAuthenticationId(); // 3.3.7.2.k
                 LoginResponse response = new LoginResponse(authId, loginInstanceId); // 3.3.7.2.l
                 return response;
@@ -224,7 +227,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                 //unexpected condition?  error?
             }
         }
-          
+        
         return null; 
     }
 
@@ -259,6 +262,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
         // get the currently executing user
         Subject currentUser = SecurityUtils.getSubject();
         
+        HashSet<String> roles = LoginServiceSecurityUtils.getRoles();
         
         return null;
     }
