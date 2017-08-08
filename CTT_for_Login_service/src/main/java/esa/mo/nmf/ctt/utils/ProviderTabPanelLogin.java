@@ -30,8 +30,6 @@ import org.ccsds.moims.mo.common.directory.structures.ProviderSummary;
  */
 public class ProviderTabPanelLogin extends ProviderTabPanel {
     
-    final JTabbedPane tabs = super.getTabs(); //ProviderTabPanel needs getTabs()
-    
     /**
      * Creates a new tab for a Provider and populates it.
      *
@@ -44,7 +42,8 @@ public class ProviderTabPanelLogin extends ProviderTabPanel {
     @Override
     public void insertServicesTabs() {
         // To do: Insert the Login service Consumer tab here!
-        // Check how it is done inside the startTabs() method for exmaples
+        // Check how it is done inside the startTabs() method for examples
+        JTabbedPane tabs = super.getTabs();
         if (this.services.getCommonServices() != null) {
             if (this.services.getCommonServices().getLoginService() != null) {
                 LoginConsumerPanel panel = new LoginConsumerPanel(this.services.getCommonServices().getLoginService());
