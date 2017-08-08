@@ -21,7 +21,6 @@
 package esa.mo.common.impl.util;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import org.apache.shiro.SecurityUtils;
@@ -29,6 +28,7 @@ import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.realm.text.IniRealm;
 import org.apache.shiro.subject.Subject;
+import org.ccsds.moims.mo.mal.structures.LongList;
 
 /**
  *
@@ -40,12 +40,11 @@ public class LoginServiceSecurityUtils {
         RealmSecurityManager securityManager = (RealmSecurityManager) SecurityUtils.getSecurityManager();
         Collection<Realm> realms = securityManager.getRealms();
         return realms;
-  }
+    }
     
-    public static HashSet<String> getRoles() {
-
-        Subject subject = SecurityUtils.getSubject();
-        HashSet<String> roles = new HashSet();
+    public static LongList getRoles(Subject subject) {
+        
+        LongList roles = new LongList();
         Map allRoles = null;
 
         if (subject.isAuthenticated()) {
@@ -63,7 +62,7 @@ public class LoginServiceSecurityUtils {
                 while (it.hasNext()) {
                     Map.Entry pair = (Map.Entry) it.next();
                     if (subject.hasRole((String) pair.getKey())) {
-                        roles.add((String) pair.getKey());
+                        roles.add((Long) pair.getKey());
                     }       
                 }
             }

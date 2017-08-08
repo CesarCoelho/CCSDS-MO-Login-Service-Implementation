@@ -24,12 +24,10 @@ import esa.mo.com.impl.util.COMServicesProvider;
 import esa.mo.com.impl.util.HelperArchive;
 import esa.mo.common.impl.util.LoginServiceSecurityUtils;
 import esa.mo.helpertools.connections.ConnectionProvider;
-import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
-import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.config.IniSecurityManagerFactory;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.subject.Subject;
@@ -207,10 +205,6 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                         mali);
                 this.loginEventId = loginEvent;
                 
-                Blob authId = this.loginServiceProvider.getBrokerAuthenticationId(); // 3.3.7.2.k
-                LoginResponse response = new LoginResponse(authId, loginInstanceId); // 3.3.7.2.l
-                return response;
-                
             } catch (UnknownAccountException uae) {
                 // 3.3.7.2.e - unknown user
                 throw new MALInteractionException(new MALStandardError(MALHelper.UNKNOWN_ERROR_NUMBER, null));
@@ -226,6 +220,11 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
             } catch (AuthenticationException ae) {
                 //unexpected condition?  error?
             }
+            
+            Blob authId = this.loginServiceProvider.getBrokerAuthenticationId(); // 3.3.7.2.k
+            LoginResponse response = new LoginResponse(authId, loginInstanceId); // 3.3.7.2.l
+            return response;
+            
         }
         
         return null; 
@@ -259,11 +258,43 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
     @Override
     public LongList listRoles(Identifier idntfr, String string, MALInteraction mali) throws MALInteractionException, MALException {
         
+        LongList roles = new LongList();
+        
+        // 3.3.9.2.a
+        if (idntfr == null) {
+            throw new IllegalArgumentException("username argument must not be null");
+        }
+        
+        // 3.3.9.2.b
+        if (idntfr.toString().equals("*") || idntfr.toString().isEmpty()) {
+            throw new MALInteractionException(new MALStandardError(COMHelper.INVALID_ERROR_NUMBER, null));
+        }
+        
         // get the currently executing user
         Subject currentUser = SecurityUtils.getSubject();
         
-        HashSet<String> roles = LoginServiceSecurityUtils.getRoles();
-        
+        // login the current user to check against roles
+        if (!currentUser.isAuthenticated()) {
+            UsernamePasswordToken token = new UsernamePasswordToken(idntfr.toString(), string);
+            try {
+                currentUser.login(token);
+                roles = LoginServiceSecurityUtils.getRoles(currentUser);
+                currentUser.logout();
+            } catch (UnknownAccountException uae) {
+                // 3.3.9.2.c - unknown user
+                throw new MALInteractionException(new MALStandardError(MALHelper.UNKNOWN_ERROR_NUMBER, null));
+            } catch (IncorrectCredentialsException ice) {
+                // 3.3.9.2.c - username, password are not correct
+                throw new MALInteractionException(new MALStandardError(MALHelper.UNKNOWN_ERROR_NUMBER, null));
+            } catch (ConcurrentAccessException cae) {
+                
+            } catch (ExcessiveAttemptsException eae) {
+  
+            } catch (AuthenticationException ae) {
+                //unexpected condition?  error?
+            }
+            return roles;
+        }    
         return null;
     }
 
