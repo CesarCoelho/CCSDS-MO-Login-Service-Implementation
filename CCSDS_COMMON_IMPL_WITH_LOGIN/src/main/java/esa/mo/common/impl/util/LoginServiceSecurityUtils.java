@@ -62,7 +62,7 @@ public class LoginServiceSecurityUtils {
                 while (it.hasNext()) {
                     Map.Entry pair = (Map.Entry) it.next();
                     if (subject.hasRole((String) pair.getKey())) {
-                        roles.add((Long) pair.getKey());
+                        roles.add(Long.valueOf((String) pair.getKey()));
                     }       
                 }
             }

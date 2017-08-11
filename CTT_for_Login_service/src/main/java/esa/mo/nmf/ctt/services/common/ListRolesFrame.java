@@ -26,18 +26,18 @@ import javax.swing.JOptionPane;
  *
  * @author Andreea Pirvulescu
  */
-public class LoginFrame extends javax.swing.JFrame {
-
-    private LoginConsumerPanel lcp;
+public class ListRolesFrame extends javax.swing.JFrame {
     
+    private LoginConsumerPanel lcp;
+
     /**
-     * Creates new form LoginFrame
+     * Creates new form ListRolesFrame
      */
-    public LoginFrame() {
+    public ListRolesFrame() {
         initComponents();
     }
     
-    public LoginFrame(LoginConsumerPanel lcp) {
+    public ListRolesFrame(LoginConsumerPanel lcp) {
         initComponents();
         this.lcp = lcp;
     }
@@ -52,34 +52,30 @@ public class LoginFrame extends javax.swing.JFrame {
     private void initComponents() {
 
         usernameLabel = new javax.swing.JLabel();
-        roleLabel = new javax.swing.JLabel();
         passwordLabel = new javax.swing.JLabel();
         usernameField = new javax.swing.JTextField();
         passwordField = new javax.swing.JPasswordField();
-        submitButton = new javax.swing.JButton();
-        clearButton = new javax.swing.JButton();
-        roleField = new javax.swing.JTextField();
+        listRolesButton = new javax.swing.JButton();
+        jButton1 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Login");
+        setTitle("List roles");
 
         usernameLabel.setText("Username");
 
-        roleLabel.setText("Role");
-
         passwordLabel.setText("Password");
 
-        submitButton.setText("Submit");
-        submitButton.addActionListener(new java.awt.event.ActionListener() {
+        listRolesButton.setText("Submit");
+        listRolesButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                submitButtonActionPerformed(evt);
+                listRolesButtonActionPerformed(evt);
             }
         });
 
-        clearButton.setText("Clear");
-        clearButton.addActionListener(new java.awt.event.ActionListener() {
+        jButton1.setText("Clear");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                clearButtonActionPerformed(evt);
+                jButton1ActionPerformed(evt);
             }
         });
 
@@ -88,81 +84,61 @@ public class LoginFrame extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(101, 101, 101)
+                .addGap(99, 99, 99)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(roleLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(passwordLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(usernameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(submitButton, javax.swing.GroupLayout.DEFAULT_SIZE, 90, Short.MAX_VALUE))
-                .addGap(43, 43, 43)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(roleField)
-                    .addComponent(usernameField)
-                    .addComponent(passwordField)
-                    .addComponent(clearButton, javax.swing.GroupLayout.DEFAULT_SIZE, 88, Short.MAX_VALUE))
-                .addContainerGap(83, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(listRolesButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton1))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(passwordLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(usernameLabel))
+                        .addGap(36, 36, 36)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(usernameField, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(passwordField, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap(116, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(79, 79, 79)
+                .addGap(69, 69, 69)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(usernameLabel)
                     .addComponent(usernameField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(21, 21, 21)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(roleLabel)
-                    .addComponent(roleField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(21, 21, 21)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGap(20, 20, 20)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(passwordLabel)
                     .addComponent(passwordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(29, 29, 29)
+                .addGap(30, 30, 30)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(submitButton)
-                    .addComponent(clearButton))
-                .addContainerGap(67, Short.MAX_VALUE))
+                    .addComponent(listRolesButton)
+                    .addComponent(jButton1))
+                .addContainerGap(118, Short.MAX_VALUE))
         );
-
-        getAccessibleContext().setAccessibleDescription("");
 
         pack();
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void submitButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_submitButtonActionPerformed
+    private void listRolesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_listRolesButtonActionPerformed
         // TODO add your handling code here:
-        try {
-            Long role = Long.parseLong(this.roleField.getText());
-        } catch (NumberFormatException e) {
-            this.roleField.setText("");
-            JOptionPane.showMessageDialog(null, "Please enter a number for role");
-        }
-        if (this.usernameField.getText().isEmpty() || this.roleField.getText().isEmpty()
-                || this.passwordField.getText().isEmpty()) {
+        if (this.usernameField.getText().isEmpty() || this.passwordField.getText().isEmpty()) {
             JOptionPane.showMessageDialog(null, "Field cannot be blank");
         }
 
         lcp.data[0] = this.usernameField.getText();
-        lcp.data[1] = this.roleField.getText();
-        lcp.data[2] = this.passwordField.getText();
-        lcp.checkLoginFrData();
-        
-        if (!lcp.isAuthenticated()) {
-            JOptionPane.showMessageDialog(null, "Incorrect credentials");
-        } else {
-            JOptionPane.showMessageDialog(null, "You have been successfully authenticated");
-            this.setVisible(false);
-        }
-        
-    }//GEN-LAST:event_submitButtonActionPerformed
+        lcp.data[1] = this.passwordField.getText();
+        lcp.checkListRolesFrData();
+        this.setVisible(false);
+    }//GEN-LAST:event_listRolesButtonActionPerformed
 
-    private void clearButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearButtonActionPerformed
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
         this.usernameField.setText("");
-        this.roleField.setText("");
         this.passwordField.setText("");
-    }//GEN-LAST:event_clearButtonActionPerformed
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -181,13 +157,13 @@ public class LoginFrame extends javax.swing.JFrame {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(LoginFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(ListRolesFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(LoginFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(ListRolesFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(LoginFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(ListRolesFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(LoginFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(ListRolesFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
 
@@ -195,18 +171,16 @@ public class LoginFrame extends javax.swing.JFrame {
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                new LoginFrame().setVisible(true);
+                new ListRolesFrame().setVisible(true);
             }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton clearButton;
+    private javax.swing.JButton jButton1;
+    private javax.swing.JButton listRolesButton;
     private javax.swing.JPasswordField passwordField;
     private javax.swing.JLabel passwordLabel;
-    private javax.swing.JTextField roleField;
-    private javax.swing.JLabel roleLabel;
-    private javax.swing.JButton submitButton;
     private javax.swing.JTextField usernameField;
     private javax.swing.JLabel usernameLabel;
     // End of variables declaration//GEN-END:variables

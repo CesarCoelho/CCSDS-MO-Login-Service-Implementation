@@ -23,11 +23,14 @@ package esa.mo.nmf.ctt.services.common;
 import esa.mo.common.impl.consumer.LoginConsumerServiceImpl;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.DefaultListModel;
+import javax.swing.JOptionPane;
 import org.ccsds.moims.mo.common.login.body.LoginResponse;
 import org.ccsds.moims.mo.common.login.structures.Profile;
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.MALInteractionException;
 import org.ccsds.moims.mo.mal.structures.Identifier;
+import org.ccsds.moims.mo.mal.structures.LongList;
 
 /**
  *
@@ -50,13 +53,14 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         this.serviceCommonLogin = serviceCommonLogin;
         loginTable = new LoginTablePanel(serviceCommonLogin.getCOMServices().getArchiveService());
         this.logoutButton.setVisible(false);
+        this.jScrollPane2.setVisible(false);
     }
 
     public boolean isAuthenticated() {
         return authenticationStatus;
     }
 
-    public void checkData() {
+    public void checkLoginFrData() {
         Identifier username = new Identifier(this.data[0]);
         Long role = Long.valueOf(this.data[1]);
         String password = this.data[2];
@@ -68,6 +72,8 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
             loginResponse = this.serviceCommonLogin.getLoginStub().login(profile, password);
             if (loginResponse != null) {
                 authenticationStatus = true;
+                this.listRolesButton.setVisible(false);
+                this.jScrollPane2.setVisible(false);
             }
         } catch (MALInteractionException ex) {
             Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
@@ -78,6 +84,32 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         if (this.isAuthenticated()) {
             this.loginButton.setVisible(false);
             this.logoutButton.setVisible(true);
+        }
+    }
+    
+     public void checkListRolesFrData() {
+        Identifier username = new Identifier(this.data[0]);
+        String password = this.data[1];
+        
+        LongList roles;   
+        try {
+            roles = this.serviceCommonLogin.getLoginStub().listRoles(username, password);
+            if (roles == null) {
+                JOptionPane.showMessageDialog(null, "There are no roles for this username and password combination"); 
+            } else {
+                this.jScrollPane2.setVisible(true);
+                String title = "Roles for user " + username + ":";
+                DefaultListModel model = new DefaultListModel();
+                this.rolesList.setModel(model);
+                model.add(0, title);
+                for (int i = 1; i <= roles.size(); i++) {
+                    model.add(i, roles.get(i-1));           
+                }
+            }
+        } catch (MALInteractionException ex) {
+            Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (MALException ex) {
+            Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -92,6 +124,9 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
 
         loginButton = new javax.swing.JButton();
         logoutButton = new javax.swing.JButton();
+        listRolesButton = new javax.swing.JButton();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        rolesList = new javax.swing.JList();
 
         loginButton.setText("Login");
         loginButton.addActionListener(new java.awt.event.ActionListener() {
@@ -107,16 +142,30 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
             }
         });
 
+        listRolesButton.setText("listRoles");
+        listRolesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                listRolesButtonActionPerformed(evt);
+            }
+        });
+
+        jScrollPane2.setViewportView(rolesList);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(72, 72, 72)
-                .addComponent(loginButton, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(logoutButton)
-                .addContainerGap(213, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(loginButton, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(logoutButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(listRolesButton)))
+                .addContainerGap(136, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -124,8 +173,11 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(loginButton)
-                    .addComponent(logoutButton))
-                .addContainerGap(266, Short.MAX_VALUE))
+                    .addComponent(logoutButton)
+                    .addComponent(listRolesButton))
+                .addGap(32, 32, 32)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(104, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -151,8 +203,17 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         
     }//GEN-LAST:event_logoutButtonActionPerformed
 
+    private void listRolesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_listRolesButtonActionPerformed
+        // TODO add your handling code here:
+        ListRolesFrame lrf = new ListRolesFrame(this);
+        lrf.setVisible(true);        
+    }//GEN-LAST:event_listRolesButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JButton listRolesButton;
     private javax.swing.JButton loginButton;
     private javax.swing.JButton logoutButton;
+    private javax.swing.JList<String> rolesList;
     // End of variables declaration//GEN-END:variables
 }
