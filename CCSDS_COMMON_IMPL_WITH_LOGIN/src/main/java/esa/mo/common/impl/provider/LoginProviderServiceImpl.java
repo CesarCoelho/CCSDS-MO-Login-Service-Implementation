@@ -237,13 +237,13 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
         
         // logout the user
         this.currentUser.logout();
-
+        
         ObjectKey key = new ObjectKey(
                 this.connection.getPrimaryConnectionDetails().getDomain(), 
                 this.loginEventId);
-        ObjectType type = new ObjectType();
+        ObjectType type = LoginHelper.LOGINEVENT_OBJECT_TYPE;
         ObjectId objId = new ObjectId(type, key);
-        
+
         // 3.3.8.2.b - LogoutEvent
         Long logoutEvent = this.comServices.getEventService().generateAndStoreEvent(
                 LoginHelper.LOGOUTEVENT_OBJECT_TYPE,

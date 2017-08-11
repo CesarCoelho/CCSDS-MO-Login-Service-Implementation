@@ -1,7 +1,22 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/* ----------------------------------------------------------------------------
+ * Copyright (C) 2015      European Space Agency
+ *                         European Space Operations Centre
+ *                         Darmstadt
+ *                         Germany
+ * ----------------------------------------------------------------------------
+ * System                : ESA NanoSat MO Framework
+ * ----------------------------------------------------------------------------
+ * Licensed under the European Space Agency Public License, Version 2.0
+ * You may not use this file except in compliance with the License.
+ *
+ * Except as expressly set forth in this License, the Software is provided to
+ * You on an "as is" basis and without warranties of any kind, including without
+ * limitation merchantability, fitness for a particular purpose, absence of
+ * defects or errors, accuracy or non-infringement of intellectual property rights.
+ * 
+ * See the License for the specific language governing permissions and
+ * limitations under the License. 
+ * ----------------------------------------------------------------------------
  */
 package esa.mo.nmf.ctt.services.common;
 
@@ -34,6 +49,7 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         initComponents();
         this.serviceCommonLogin = serviceCommonLogin;
         loginTable = new LoginTablePanel(serviceCommonLogin.getCOMServices().getArchiveService());
+        this.logoutButton.setVisible(false);
     }
 
     public boolean isAuthenticated() {
@@ -58,6 +74,11 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         } catch (MALException ex) {
             Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
+        if (this.isAuthenticated()) {
+            this.loginButton.setVisible(false);
+            this.logoutButton.setVisible(true);
+        }
     }
 
     /**
@@ -69,12 +90,20 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        login = new javax.swing.JButton();
+        loginButton = new javax.swing.JButton();
+        logoutButton = new javax.swing.JButton();
 
-        login.setText("Login");
-        login.addActionListener(new java.awt.event.ActionListener() {
+        loginButton.setText("Login");
+        loginButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                loginActionPerformed(evt);
+                loginButtonActionPerformed(evt);
+            }
+        });
+
+        logoutButton.setText("Logout");
+        logoutButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                logoutButtonActionPerformed(evt);
             }
         });
 
@@ -84,26 +113,46 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(72, 72, 72)
-                .addComponent(login, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(284, Short.MAX_VALUE))
+                .addComponent(loginButton, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(logoutButton)
+                .addContainerGap(213, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(login)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(loginButton)
+                    .addComponent(logoutButton))
                 .addContainerGap(266, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void loginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loginActionPerformed
+    private void loginButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loginButtonActionPerformed
         // TODO add your handling code here: 
         LoginFrame lfr = new LoginFrame(this);
         lfr.setVisible(true);
-    }//GEN-LAST:event_loginActionPerformed
+    }//GEN-LAST:event_loginButtonActionPerformed
 
+    private void logoutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logoutButtonActionPerformed
+        
+        try {
+            this.serviceCommonLogin.getLoginStub().logout();
+        } catch (MALInteractionException ex) {
+            Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (MALException ex) {
+            Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        this.authenticationStatus = false;
+        this.serviceCommonLogin.closeConnection();
+        this.getParent().removeAll();
+        
+    }//GEN-LAST:event_logoutButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton login;
+    private javax.swing.JButton loginButton;
+    private javax.swing.JButton logoutButton;
     // End of variables declaration//GEN-END:variables
 }

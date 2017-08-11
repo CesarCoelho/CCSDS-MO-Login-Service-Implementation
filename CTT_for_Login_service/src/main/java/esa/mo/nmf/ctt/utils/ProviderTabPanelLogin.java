@@ -56,10 +56,7 @@ public class ProviderTabPanelLogin extends ProviderTabPanel {
                         return;
                     }
                 }
-                
             }
         }
-    }
-    
-    
+    }   
 }
