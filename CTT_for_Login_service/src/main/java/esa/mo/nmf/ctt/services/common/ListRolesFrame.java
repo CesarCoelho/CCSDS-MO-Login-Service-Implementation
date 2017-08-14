@@ -130,7 +130,7 @@ public class ListRolesFrame extends javax.swing.JFrame {
 
         lcp.data[0] = this.usernameField.getText();
         lcp.data[1] = this.passwordField.getText();
-        lcp.checkListRolesFrData();
+        lcp.checkListRolesData();
         this.setVisible(false);
     }//GEN-LAST:event_listRolesButtonActionPerformed
 

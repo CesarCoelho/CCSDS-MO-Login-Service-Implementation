@@ -26,20 +26,22 @@ import javax.swing.JOptionPane;
  *
  * @author Andreea Pirvulescu
  */
-public class LoginFrame extends javax.swing.JFrame {
+public class GetCredentialsFrame extends javax.swing.JFrame {
 
     private LoginConsumerPanel lcp;
+    private String operation;
     
     /**
      * Creates new form LoginFrame
      */
-    public LoginFrame() {
+    public GetCredentialsFrame() {
         initComponents();
     }
     
-    public LoginFrame(LoginConsumerPanel lcp) {
+    public GetCredentialsFrame(LoginConsumerPanel lcp, String operation) {
         initComponents();
         this.lcp = lcp;
+        this.operation = operation;
     }
 
     /**
@@ -61,7 +63,7 @@ public class LoginFrame extends javax.swing.JFrame {
         roleField = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Login");
+        setTitle("Submit credentials");
 
         usernameLabel.setText("Username");
 
@@ -146,15 +148,23 @@ public class LoginFrame extends javax.swing.JFrame {
         lcp.data[0] = this.usernameField.getText();
         lcp.data[1] = this.roleField.getText();
         lcp.data[2] = this.passwordField.getText();
-        lcp.checkLoginFrData();
-        
-        if (!lcp.isAuthenticated()) {
-            JOptionPane.showMessageDialog(null, "Incorrect credentials");
-        } else {
-            JOptionPane.showMessageDialog(null, "You have been successfully authenticated");
-            this.setVisible(false);
+        if (this.operation.equalsIgnoreCase("login")) {
+            lcp.checkLoginData();
+            if (!lcp.isAuthenticated()) {
+                JOptionPane.showMessageDialog(null, "Incorrect credentials");
+            } else {
+                JOptionPane.showMessageDialog(null, "Operation successfully completed");
+                this.setVisible(false);
+            }
+        } else if (this.operation.equalsIgnoreCase("handover")) {
+            lcp.checkHandoverData();
+            if (!lcp.handoverResult()) {
+                JOptionPane.showMessageDialog(null, "Incorrect credentials");
+            } else {
+                JOptionPane.showMessageDialog(null, "Operation successfully completed");
+                this.setVisible(false);
+            }
         }
-        
     }//GEN-LAST:event_submitButtonActionPerformed
 
     private void clearButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearButtonActionPerformed
@@ -181,21 +191,22 @@ public class LoginFrame extends javax.swing.JFrame {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(LoginFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(GetCredentialsFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(LoginFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(GetCredentialsFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(LoginFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(GetCredentialsFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(LoginFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(GetCredentialsFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
         //</editor-fold>
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                new LoginFrame().setVisible(true);
+                new GetCredentialsFrame().setVisible(true);
             }
         });
     }

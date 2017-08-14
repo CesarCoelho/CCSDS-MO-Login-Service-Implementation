@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
+import org.ccsds.moims.mo.common.login.body.HandoverResponse;
 import org.ccsds.moims.mo.common.login.body.LoginResponse;
 import org.ccsds.moims.mo.common.login.structures.Profile;
 import org.ccsds.moims.mo.mal.MALException;
@@ -41,6 +42,7 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
     private final LoginConsumerServiceImpl serviceCommonLogin;
     private final LoginTablePanel loginTable;
     private boolean authenticationStatus = false;
+    private boolean handoverSuccess = false;
     public String[] data = new String[3];
 
     /**
@@ -53,14 +55,21 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         this.serviceCommonLogin = serviceCommonLogin;
         loginTable = new LoginTablePanel(serviceCommonLogin.getCOMServices().getArchiveService());
         this.logoutButton.setVisible(false);
-        this.jScrollPane2.setVisible(false);
+        this.handoverButton.setVisible(false);
+        this.listRolesScrollPane.setVisible(false);
+        this.userTextPane.setVisible(false);
+        this.userScrollPane.setVisible(false);
     }
 
     public boolean isAuthenticated() {
         return authenticationStatus;
     }
-
-    public void checkLoginFrData() {
+    
+    public boolean handoverResult() {
+        return handoverSuccess;
+    }
+    
+    public void checkLoginData() {
         Identifier username = new Identifier(this.data[0]);
         Long role = Long.valueOf(this.data[1]);
         String password = this.data[2];
@@ -73,7 +82,10 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
             if (loginResponse != null) {
                 authenticationStatus = true;
                 this.listRolesButton.setVisible(false);
-                this.jScrollPane2.setVisible(false);
+                this.listRolesScrollPane.setVisible(false);
+                this.userTextPane.setVisible(true);
+                this.userScrollPane.setVisible(true);
+                this.userTextPane.setText("You are logged in as user " + username + " with role " + role);
             }
         } catch (MALInteractionException ex) {
             Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
@@ -84,10 +96,11 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         if (this.isAuthenticated()) {
             this.loginButton.setVisible(false);
             this.logoutButton.setVisible(true);
+            this.handoverButton.setVisible(true);
         }
     }
     
-     public void checkListRolesFrData() {
+    public void checkListRolesData() {
         Identifier username = new Identifier(this.data[0]);
         String password = this.data[1];
         
@@ -97,7 +110,7 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
             if (roles == null) {
                 JOptionPane.showMessageDialog(null, "There are no roles for this username and password combination"); 
             } else {
-                this.jScrollPane2.setVisible(true);
+                this.listRolesScrollPane.setVisible(true);
                 String title = "Roles for user " + username + ":";
                 DefaultListModel model = new DefaultListModel();
                 this.rolesList.setModel(model);
@@ -105,6 +118,27 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
                 for (int i = 1; i <= roles.size(); i++) {
                     model.add(i, roles.get(i-1));           
                 }
+            }
+        } catch (MALInteractionException ex) {
+            Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (MALException ex) {
+            Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    public void checkHandoverData() {
+        Identifier username = new Identifier(this.data[0]);
+        Long role = Long.valueOf(this.data[1]);
+        String password = this.data[2];
+
+        Profile profile = new Profile(username, role);
+
+        HandoverResponse handoverResponse;
+        try {
+            handoverResponse = this.serviceCommonLogin.getLoginStub().handover(profile, password);
+            if (handoverResponse != null) {
+                this.handoverSuccess = true;
+                this.userTextPane.setText("You are logged in as user " + username + " with role " + role);
             }
         } catch (MALInteractionException ex) {
             Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
@@ -125,8 +159,11 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         loginButton = new javax.swing.JButton();
         logoutButton = new javax.swing.JButton();
         listRolesButton = new javax.swing.JButton();
-        jScrollPane2 = new javax.swing.JScrollPane();
+        listRolesScrollPane = new javax.swing.JScrollPane();
         rolesList = new javax.swing.JList();
+        handoverButton = new javax.swing.JButton();
+        userScrollPane = new javax.swing.JScrollPane();
+        userTextPane = new javax.swing.JTextPane();
 
         loginButton.setText("Login");
         loginButton.addActionListener(new java.awt.event.ActionListener() {
@@ -149,7 +186,16 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
             }
         });
 
-        jScrollPane2.setViewportView(rolesList);
+        listRolesScrollPane.setViewportView(rolesList);
+
+        handoverButton.setText("handover");
+        handoverButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                handoverButtonActionPerformed(evt);
+            }
+        });
+
+        userScrollPane.setViewportView(userTextPane);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -157,33 +203,45 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(72, 72, 72)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(loginButton, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(listRolesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(74, 74, 74)
+                                .addComponent(logoutButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(listRolesButton)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(logoutButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(listRolesButton)))
-                .addContainerGap(136, Short.MAX_VALUE))
+                        .addComponent(handoverButton)
+                        .addContainerGap(75, Short.MAX_VALUE))))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(userScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(userScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(50, 50, 50)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(loginButton)
-                    .addComponent(logoutButton)
-                    .addComponent(listRolesButton))
-                .addGap(32, 32, 32)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(104, Short.MAX_VALUE))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(logoutButton)
+                        .addComponent(listRolesButton)
+                        .addComponent(handoverButton)))
+                .addGap(18, 18, 18)
+                .addComponent(listRolesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(57, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void loginButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loginButtonActionPerformed
         // TODO add your handling code here: 
-        LoginFrame lfr = new LoginFrame(this);
+        GetCredentialsFrame lfr = new GetCredentialsFrame(this, "login");
         lfr.setVisible(true);
     }//GEN-LAST:event_loginButtonActionPerformed
 
@@ -209,11 +267,20 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         lrf.setVisible(true);        
     }//GEN-LAST:event_listRolesButtonActionPerformed
 
+    private void handoverButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_handoverButtonActionPerformed
+        // TODO add your handling code here:
+        GetCredentialsFrame lfr = new GetCredentialsFrame(this, "handover");
+        lfr.setVisible(true);
+    }//GEN-LAST:event_handoverButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JButton handoverButton;
     private javax.swing.JButton listRolesButton;
+    private javax.swing.JScrollPane listRolesScrollPane;
     private javax.swing.JButton loginButton;
     private javax.swing.JButton logoutButton;
     private javax.swing.JList<String> rolesList;
+    private javax.swing.JScrollPane userScrollPane;
+    private javax.swing.JTextPane userTextPane;
     // End of variables declaration//GEN-END:variables
 }

@@ -30,7 +30,6 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.config.IniSecurityManagerFactory;
 import org.apache.shiro.mgt.SecurityManager;
-import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.Factory;
 import org.ccsds.moims.mo.com.COMHelper;
@@ -173,15 +172,15 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                 this.currentUser.login(token);
                 
                 // 3.3.3.b - LoginRole
-                IdentifierList usernames = new IdentifierList();
-                usernames.add(inputUsername);
+                IdentifierList objs = new IdentifierList();
+                objs.add(new Identifier(String.valueOf(inputRole)));
                 LongList roleIds = this.comServices.getArchiveService().store(true, 
                         LoginHelper.LOGINROLE_OBJECT_TYPE,
                         connection.getPrimaryConnectionDetails().getDomain(),
                         HelperArchive.generateArchiveDetailsList(null, 
                                 null,
                                 this.connection.getPrimaryConnectionDetails().getProviderURI()),
-                        usernames,
+                        objs,
                         mali);
         
                 // 3.3.7.2.h - LoginInstance
@@ -315,16 +314,29 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
             throw new MALInteractionException(new MALStandardError(COMHelper.INVALID_ERROR_NUMBER, null));
         }
         
-        // check if the current user has the same username and role
-        if (this.currentUser.isAuthenticated()) {
-            if (this.currentUser.getPrincipals().equals(username) && this.currentUser.hasRole(role.toString())) {           
-            } else {
-                this.currentUser.runAs(new SimplePrincipalCollection(username,
-                        IniSecurityManagerFactory.INI_REALM_NAME));
-            }
-        }
+        Blob authId = this.loginServiceProvider.getBrokerAuthenticationId();
+        HandoverResponse response = null;
         
-        return null;
+        if (this.currentUser.isAuthenticated()) {
+            // check if this is a change of role for the current user
+            if (this.currentUser.getPrincipals().getPrimaryPrincipal().equals(username.toString())
+                    && this.currentUser.hasRole(String.valueOf(role))) {
+                IdentifierList objs = new IdentifierList();
+                objs.add(new Identifier(String.valueOf(role)));
+                LongList roleIds = this.comServices.getArchiveService().store(true,
+                        LoginHelper.LOGINROLE_OBJECT_TYPE,
+                        connection.getPrimaryConnectionDetails().getDomain(),
+                        HelperArchive.generateArchiveDetailsList(null,
+                                null,
+                                this.connection.getPrimaryConnectionDetails().getProviderURI()),
+                        objs,
+                        mali);
+                response = new HandoverResponse(authId, this.loginInstanceId);
+            }
+            // this.currentUser.runAs(new SimplePrincipalCollection(username,
+            //  IniSecurityManagerFactory.INI_REALM_NAME));
+        }
+        return response;
     }
-
+    
 }
