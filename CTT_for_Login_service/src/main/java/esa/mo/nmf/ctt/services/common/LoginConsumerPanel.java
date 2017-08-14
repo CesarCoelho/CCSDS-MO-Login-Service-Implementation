@@ -91,6 +91,8 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
             Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
         } catch (MALException ex) {
             Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (NullPointerException ex) {
+            Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
         }
         
         if (this.isAuthenticated()) {
@@ -123,6 +125,8 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
             Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
         } catch (MALException ex) {
             Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (NullPointerException ex) {
+            Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
@@ -143,6 +147,8 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         } catch (MALInteractionException ex) {
             Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
         } catch (MALException ex) {
+            Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (NullPointerException ex) {
             Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
