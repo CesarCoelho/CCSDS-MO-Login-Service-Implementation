@@ -65,8 +65,12 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         return authenticationStatus;
     }
     
-    public boolean handoverResult() {
+    public boolean getHandoverResult() {
         return handoverSuccess;
+    }
+    
+    public void setHandoverResult(boolean result) {
+        this.handoverSuccess = result;
     }
     
     public void checkLoginData() {
@@ -76,22 +80,19 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
 
         Profile profile = new Profile(username, role);
 
-        LoginResponse loginResponse;
         try {
-            loginResponse = this.serviceCommonLogin.getLoginStub().login(profile, password);
+            LoginResponse loginResponse = this.serviceCommonLogin.getLoginStub().login(profile, password);
             if (loginResponse != null) {
-                authenticationStatus = true;
+                this.authenticationStatus = true;
                 this.listRolesButton.setVisible(false);
                 this.listRolesScrollPane.setVisible(false);
                 this.userTextPane.setVisible(true);
                 this.userScrollPane.setVisible(true);
                 this.userTextPane.setText("You are logged in as user " + username + " with role " + role);
-            }
+            } 
         } catch (MALInteractionException ex) {
             Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
         } catch (MALException ex) {
-            Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (NullPointerException ex) {
             Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
         }
         
@@ -106,11 +107,10 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         Identifier username = new Identifier(this.data[0]);
         String password = this.data[1];
         
-        LongList roles;   
         try {
-            roles = this.serviceCommonLogin.getLoginStub().listRoles(username, password);
+            LongList roles = this.serviceCommonLogin.getLoginStub().listRoles(username, password);
             if (roles == null) {
-                JOptionPane.showMessageDialog(null, "There are no roles for this username and password combination"); 
+                JOptionPane.showMessageDialog(null, "There are no roles for this username and password combination");
             } else {
                 this.listRolesScrollPane.setVisible(true);
                 String title = "Roles for user " + username + ":";
@@ -125,8 +125,6 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
             Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
         } catch (MALException ex) {
             Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (NullPointerException ex) {
-            Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
@@ -136,10 +134,9 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         String password = this.data[2];
 
         Profile profile = new Profile(username, role);
-
-        HandoverResponse handoverResponse;
+        
         try {
-            handoverResponse = this.serviceCommonLogin.getLoginStub().handover(profile, password);
+            HandoverResponse handoverResponse = this.serviceCommonLogin.getLoginStub().handover(profile, password);
             if (handoverResponse != null) {
                 this.handoverSuccess = true;
                 this.userTextPane.setText("You are logged in as user " + username + " with role " + role);
@@ -147,8 +144,6 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         } catch (MALInteractionException ex) {
             Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
         } catch (MALException ex) {
-            Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (NullPointerException ex) {
             Logger.getLogger(LoginConsumerPanel.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -226,13 +221,13 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
                         .addContainerGap(75, Short.MAX_VALUE))))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(userScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(userScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 294, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(userScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(50, 50, 50)
+                .addComponent(userScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(39, 39, 39)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(loginButton)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)

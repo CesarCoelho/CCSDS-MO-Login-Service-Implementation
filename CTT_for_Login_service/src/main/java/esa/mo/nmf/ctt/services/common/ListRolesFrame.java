@@ -56,9 +56,8 @@ public class ListRolesFrame extends javax.swing.JFrame {
         usernameField = new javax.swing.JTextField();
         passwordField = new javax.swing.JPasswordField();
         listRolesButton = new javax.swing.JButton();
-        jButton1 = new javax.swing.JButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("List roles");
 
         usernameLabel.setText("Username");
@@ -72,24 +71,14 @@ public class ListRolesFrame extends javax.swing.JFrame {
             }
         });
 
-        jButton1.setText("Clear");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(99, 99, 99)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(listRolesButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButton1))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(listRolesButton, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(passwordLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -112,9 +101,7 @@ public class ListRolesFrame extends javax.swing.JFrame {
                     .addComponent(passwordLabel)
                     .addComponent(passwordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(30, 30, 30)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(listRolesButton)
-                    .addComponent(jButton1))
+                .addComponent(listRolesButton)
                 .addContainerGap(118, Short.MAX_VALUE))
         );
 
@@ -128,17 +115,11 @@ public class ListRolesFrame extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(null, "Field cannot be blank");
         }
 
-        lcp.data[0] = this.usernameField.getText();
-        lcp.data[1] = this.passwordField.getText();
-        lcp.checkListRolesData();
-        this.setVisible(false);
+        this.lcp.data[0] = this.usernameField.getText();
+        this.lcp.data[1] = this.passwordField.getText();
+        this.lcp.checkListRolesData();
+        this.dispose();
     }//GEN-LAST:event_listRolesButtonActionPerformed
-
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // TODO add your handling code here:
-        this.usernameField.setText("");
-        this.passwordField.setText("");
-    }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -177,7 +158,6 @@ public class ListRolesFrame extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
     private javax.swing.JButton listRolesButton;
     private javax.swing.JPasswordField passwordField;
     private javax.swing.JLabel passwordLabel;

@@ -59,10 +59,9 @@ public class GetCredentialsFrame extends javax.swing.JFrame {
         usernameField = new javax.swing.JTextField();
         passwordField = new javax.swing.JPasswordField();
         submitButton = new javax.swing.JButton();
-        clearButton = new javax.swing.JButton();
         roleField = new javax.swing.JTextField();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Submit credentials");
 
         usernameLabel.setText("Username");
@@ -75,13 +74,6 @@ public class GetCredentialsFrame extends javax.swing.JFrame {
         submitButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 submitButtonActionPerformed(evt);
-            }
-        });
-
-        clearButton.setText("Clear");
-        clearButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                clearButtonActionPerformed(evt);
             }
         });
 
@@ -98,10 +90,9 @@ public class GetCredentialsFrame extends javax.swing.JFrame {
                     .addComponent(submitButton, javax.swing.GroupLayout.DEFAULT_SIZE, 90, Short.MAX_VALUE))
                 .addGap(43, 43, 43)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(roleField)
+                    .addComponent(roleField, javax.swing.GroupLayout.DEFAULT_SIZE, 88, Short.MAX_VALUE)
                     .addComponent(usernameField)
-                    .addComponent(passwordField)
-                    .addComponent(clearButton, javax.swing.GroupLayout.DEFAULT_SIZE, 88, Short.MAX_VALUE))
+                    .addComponent(passwordField))
                 .addContainerGap(83, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -120,9 +111,7 @@ public class GetCredentialsFrame extends javax.swing.JFrame {
                     .addComponent(passwordLabel)
                     .addComponent(passwordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(29, 29, 29)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(submitButton)
-                    .addComponent(clearButton))
+                .addComponent(submitButton)
                 .addContainerGap(67, Short.MAX_VALUE))
         );
 
@@ -145,34 +134,30 @@ public class GetCredentialsFrame extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(null, "Field cannot be blank");
         }
 
-        lcp.data[0] = this.usernameField.getText();
-        lcp.data[1] = this.roleField.getText();
-        lcp.data[2] = this.passwordField.getText();
+        this.lcp.data[0] = this.usernameField.getText();
+        this.lcp.data[1] = this.roleField.getText();
+        this.lcp.data[2] = this.passwordField.getText();
         if (this.operation.equalsIgnoreCase("login")) {
-            lcp.checkLoginData();
-            if (!lcp.isAuthenticated()) {
+            this.lcp.checkLoginData();
+            if (!this.lcp.isAuthenticated()) {
                 JOptionPane.showMessageDialog(null, "Incorrect credentials");
+                this.dispose();
             } else {
                 JOptionPane.showMessageDialog(null, "Operation successfully completed");
-                this.setVisible(false);
+                this.dispose();
             }
         } else if (this.operation.equalsIgnoreCase("handover")) {
-            lcp.checkHandoverData();
-            if (!lcp.handoverResult()) {
+            this.lcp.checkHandoverData();
+            if (!this.lcp.getHandoverResult()) {
                 JOptionPane.showMessageDialog(null, "Incorrect credentials");
+                this.dispose();
             } else {
                 JOptionPane.showMessageDialog(null, "Operation successfully completed");
-                this.setVisible(false);
+                this.lcp.setHandoverResult(false);               
+                this.dispose();             
             }
         }
     }//GEN-LAST:event_submitButtonActionPerformed
-
-    private void clearButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearButtonActionPerformed
-        // TODO add your handling code here:
-        this.usernameField.setText("");
-        this.roleField.setText("");
-        this.passwordField.setText("");
-    }//GEN-LAST:event_clearButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -212,7 +197,6 @@ public class GetCredentialsFrame extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton clearButton;
     private javax.swing.JPasswordField passwordField;
     private javax.swing.JLabel passwordLabel;
     private javax.swing.JTextField roleField;
