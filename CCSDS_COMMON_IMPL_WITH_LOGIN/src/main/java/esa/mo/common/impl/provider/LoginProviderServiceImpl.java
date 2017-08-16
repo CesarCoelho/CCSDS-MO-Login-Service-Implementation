@@ -30,6 +30,7 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.config.IniSecurityManagerFactory;
 import org.apache.shiro.mgt.SecurityManager;
+import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.Factory;
 import org.ccsds.moims.mo.com.COMHelper;
@@ -318,7 +319,8 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
         Blob authId = this.loginServiceProvider.getBrokerAuthenticationId();
         HandoverResponse response = null;
         
-        if (this.currentUser.isAuthenticated()) {
+        if (this.currentUser.isAuthenticated()
+                && LoginServiceSecurityUtils.isUser(username.getValue(), string)) {
             // check if this is a change of role for the current user
             if (this.currentUser.getPrincipals().getPrimaryPrincipal().equals(username.toString())) {
                 if (this.currentUser.hasRole(String.valueOf(role))) {
@@ -336,13 +338,10 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                 } else {
                     return null;
                 }
-            } else {
-                this.currentUser.logout();             
-                LoginResponse loginResponse = this.login(prfl, string, mali);               
-                if (loginResponse == null) {
-                    return null;
-                }               
-                response = new HandoverResponse(loginResponse.getBodyElement0(), loginResponse.getBodyElement1());
+            } else if (LoginServiceSecurityUtils.hasRole(username.getValue(), String.valueOf(role))) {
+                this.currentUser.runAs(new SimplePrincipalCollection(username.getValue(),
+                        IniSecurityManagerFactory.INI_REALM_NAME));
+                response = new HandoverResponse(authId, this.loginInstanceId);
             }
         }
         return response;

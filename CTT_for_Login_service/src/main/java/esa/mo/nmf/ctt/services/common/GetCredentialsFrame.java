@@ -133,7 +133,7 @@ public class GetCredentialsFrame extends javax.swing.JFrame {
                 || this.passwordField.getText().isEmpty()) {
             JOptionPane.showMessageDialog(null, "Field cannot be blank");
         }
-
+        
         this.lcp.data[0] = this.usernameField.getText();
         this.lcp.data[1] = this.roleField.getText();
         this.lcp.data[2] = this.passwordField.getText();

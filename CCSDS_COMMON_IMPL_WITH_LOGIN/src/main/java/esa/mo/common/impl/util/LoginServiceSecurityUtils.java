@@ -20,10 +20,13 @@
  */
 package esa.mo.common.impl.util;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.credential.DefaultPasswordService;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.realm.text.IniRealm;
@@ -42,6 +45,59 @@ public class LoginServiceSecurityUtils {
         return realms;
     }
     
+    public static boolean isUser(String username, String pass) {
+       
+        Collection realmsList = getRealmsList();
+        Map allUsers = null;
+            
+        for (Iterator<Realm> iterator = realmsList.iterator(); iterator.hasNext();) {
+            Realm realm = iterator.next();
+            String name = realm.getClass().getName();
+            if (name.equals("org.apache.shiro.realm.text.IniRealm")) {
+                allUsers = ((IniRealm) realm).getIni().get("users");
+            }
+        }
+        
+        DefaultPasswordService dps = new DefaultPasswordService();
+        if (allUsers != null) {
+            Iterator it = allUsers.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry pair = (Map.Entry) it.next();
+                List<String> infoList = Arrays.asList(pair.getValue().toString().split(","));
+                if (pair.getKey().toString().equals(username) && dps.passwordsMatch(pass, infoList.get(0))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    public static boolean hasRole(String username, String role) {
+       
+        Collection realmsList = getRealmsList();
+        Map allUsers = null;
+            
+        for (Iterator<Realm> iterator = realmsList.iterator(); iterator.hasNext();) {
+            Realm realm = iterator.next();
+            String name = realm.getClass().getName();
+            if (name.equals("org.apache.shiro.realm.text.IniRealm")) {
+                allUsers = ((IniRealm) realm).getIni().get("users");
+            }
+        }
+        
+        if (allUsers != null) {
+            Iterator it = allUsers.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry pair = (Map.Entry) it.next();
+                List<String> infoList = Arrays.asList(pair.getValue().toString().split("[ *,* ]"));
+                if (pair.getKey().toString().equals(username) && infoList.contains(role)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
     public static LongList getRoles(Subject subject) {
         
         LongList roles = new LongList();
@@ -49,7 +105,7 @@ public class LoginServiceSecurityUtils {
 
         if (subject.isAuthenticated()) {
             Collection realmsList = getRealmsList();
-            for (Iterator<Realm> iterator = realmsList.iterator(); iterator.hasNext(); ) {
+            for (Iterator<Realm> iterator = realmsList.iterator(); iterator.hasNext();) {
                 Realm realm = iterator.next();
                 String name = realm.getClass().getName();
                 if (name.equals("org.apache.shiro.realm.text.IniRealm")) {
@@ -68,5 +124,5 @@ public class LoginServiceSecurityUtils {
             }
         }
         return roles;
-    }
+    }    
 }

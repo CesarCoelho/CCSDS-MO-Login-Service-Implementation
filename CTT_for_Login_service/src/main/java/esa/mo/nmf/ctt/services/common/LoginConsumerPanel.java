@@ -134,7 +134,6 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         String password = this.data[2];
 
         Profile profile = new Profile(username, role);
-        
         try {
             HandoverResponse handoverResponse = this.serviceCommonLogin.getLoginStub().handover(profile, password);
             if (handoverResponse != null) {
