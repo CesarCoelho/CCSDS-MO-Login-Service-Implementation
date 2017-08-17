@@ -341,7 +341,36 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
             } else if (LoginServiceSecurityUtils.hasRole(username.getValue(), String.valueOf(role))) {
                 this.currentUser.runAs(new SimplePrincipalCollection(username.getValue(),
                         IniSecurityManagerFactory.INI_REALM_NAME));
-                response = new HandoverResponse(authId, this.loginInstanceId);
+
+                IdentifierList objs = new IdentifierList();
+                objs.add(new Identifier(String.valueOf(role)));
+                LongList roleIds = this.comServices.getArchiveService().store(true,
+                        LoginHelper.LOGINROLE_OBJECT_TYPE,
+                        connection.getPrimaryConnectionDetails().getDomain(),
+                        HelperArchive.generateArchiveDetailsList(null,
+                                null,
+                                this.connection.getPrimaryConnectionDetails().getProviderURI()),
+                        objs,
+                        mali);
+                
+                ObjectKey key = new ObjectKey(
+                        this.connection.getPrimaryConnectionDetails().getDomain(),
+                        this.loginInstanceId);
+                ObjectType type = LoginHelper.LOGININSTANCE_OBJECT_TYPE;
+                ObjectId objId = new ObjectId(type, key);       
+                
+                // 3.3.10.2.i - LoginInstance
+                ProfileList profiles = new ProfileList();
+                profiles.add(prfl);
+                LongList loginInstanceIds = this.comServices.getArchiveService().store(true,
+                        LoginHelper.LOGININSTANCE_OBJECT_TYPE,
+                        connection.getPrimaryConnectionDetails().getDomain(),
+                        HelperArchive.generateArchiveDetailsList(roleIds.get(0), // 3.3.10.2.j
+                                objId, // 3.3.10.2.k
+                                this.connection.getPrimaryConnectionDetails().getProviderURI()),
+                        profiles,
+                        mali);
+                response = new HandoverResponse(authId, loginInstanceIds.get(0)); // 3.3.10.2.l, 3.3.10.2.m
             }
         }
         return response;
