@@ -38,26 +38,37 @@ import org.ccsds.moims.mo.mal.structures.LongList;
  * @author Andreea Pirvulescu
  */
 public class LoginServiceSecurityUtils {
-    
-    public static Collection getRealmsList() {
+
+    /**
+     * Returns an instance of IniRealm
+     *
+     * @return realm
+     */
+    public static Realm getRealm() {
         RealmSecurityManager securityManager = (RealmSecurityManager) SecurityUtils.getSecurityManager();
         Collection<Realm> realms = securityManager.getRealms();
-        return realms;
-    }
-    
-    public static boolean isUser(String username, String pass) {
-       
-        Collection realmsList = getRealmsList();
-        Map allUsers = null;
-            
-        for (Iterator<Realm> iterator = realmsList.iterator(); iterator.hasNext();) {
-            Realm realm = iterator.next();
+
+        for (Realm realm : realms) {
             String name = realm.getClass().getName();
             if (name.equals("org.apache.shiro.realm.text.IniRealm")) {
-                allUsers = ((IniRealm) realm).getIni().get("users");
+                return realm;
             }
         }
-        
+        return null;
+    }
+
+    /**
+     * Returns true if the username and password combination exists
+     *
+     * @param username
+     * @param pass
+     * @return true if the user exists; false otherwise
+     */
+    public static boolean isUser(String username, String pass) {
+        Realm realm = getRealm();
+        // get the users defined in shiro.ini
+        Map allUsers = ((IniRealm) realm).getIni().get("users");
+        // service to encrypt pass and check against the stored hash in shiro.ini
         DefaultPasswordService dps = new DefaultPasswordService();
         if (allUsers != null) {
             Iterator it = allUsers.entrySet().iterator();
@@ -71,20 +82,19 @@ public class LoginServiceSecurityUtils {
         }
         return false;
     }
-    
+
+    /**
+     * Returns true if the username and role combination exists
+     *
+     * @param username
+     * @param role
+     * @return true if user has the role; false otherwise
+     */
     public static boolean hasRole(String username, String role) {
-       
-        Collection realmsList = getRealmsList();
-        Map allUsers = null;
-            
-        for (Iterator<Realm> iterator = realmsList.iterator(); iterator.hasNext();) {
-            Realm realm = iterator.next();
-            String name = realm.getClass().getName();
-            if (name.equals("org.apache.shiro.realm.text.IniRealm")) {
-                allUsers = ((IniRealm) realm).getIni().get("users");
-            }
-        }
-        
+        Realm realm = getRealm();
+        // get the users defined in shiro.ini
+        Map allUsers = ((IniRealm) realm).getIni().get("users");
+
         if (allUsers != null) {
             Iterator it = allUsers.entrySet().iterator();
             while (it.hasNext()) {
@@ -97,32 +107,30 @@ public class LoginServiceSecurityUtils {
         }
         return false;
     }
-    
+
+    /**
+     * Returns the roles of the current authenticated subject
+     *
+     * @param subject
+     * @return list of roles for the subject
+     */
     public static LongList getRoles(Subject subject) {
-        
+        Realm realm = getRealm();
         LongList roles = new LongList();
-        Map allRoles = null;
+        // get the roles defined in shiro.ini
+        Map allRoles = ((IniRealm) realm).getIni().get("roles");
 
         if (subject.isAuthenticated()) {
-            Collection realmsList = getRealmsList();
-            for (Iterator<Realm> iterator = realmsList.iterator(); iterator.hasNext();) {
-                Realm realm = iterator.next();
-                String name = realm.getClass().getName();
-                if (name.equals("org.apache.shiro.realm.text.IniRealm")) {
-                    allRoles = ((IniRealm) realm).getIni().get("roles");
-                }
-            }
-            
             if (allRoles != null) {
                 Iterator it = allRoles.entrySet().iterator();
                 while (it.hasNext()) {
                     Map.Entry pair = (Map.Entry) it.next();
                     if (subject.hasRole((String) pair.getKey())) {
                         roles.add(Long.valueOf((String) pair.getKey()));
-                    }       
+                    }
                 }
             }
         }
         return roles;
-    }    
+    }
 }
