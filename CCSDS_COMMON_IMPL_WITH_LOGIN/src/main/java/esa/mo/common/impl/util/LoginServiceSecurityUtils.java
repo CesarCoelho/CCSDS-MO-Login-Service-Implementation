@@ -30,7 +30,6 @@ import org.apache.shiro.authc.credential.DefaultPasswordService;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.realm.text.IniRealm;
-import org.apache.shiro.subject.Subject;
 import org.ccsds.moims.mo.mal.structures.LongList;
 
 /**
@@ -109,28 +108,28 @@ public class LoginServiceSecurityUtils {
     }
 
     /**
-     * Returns the roles of the current authenticated subject
+     * Returns the roles for a certain user
      *
-     * @param subject
-     * @return list of roles for the subject
+     * @param username
+     * @return roles that match user with username
      */
-    public static LongList getRoles(Subject subject) {
+    public static LongList getRoles(String username) {
         Realm realm = getRealm();
         LongList roles = new LongList();
         // get the roles defined in shiro.ini
         Map allRoles = ((IniRealm) realm).getIni().get("roles");
 
-        if (subject.isAuthenticated()) {
-            if (allRoles != null) {
-                Iterator it = allRoles.entrySet().iterator();
-                while (it.hasNext()) {
-                    Map.Entry pair = (Map.Entry) it.next();
-                    if (subject.hasRole((String) pair.getKey())) {
-                        roles.add(Long.valueOf((String) pair.getKey()));
-                    }
+        if (allRoles != null) {
+            Iterator it = allRoles.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry pair = (Map.Entry) it.next();
+                if (hasRole(username, (String) pair.getKey())) {
+                    roles.add(Long.valueOf((String) pair.getKey()));
                 }
             }
+            return roles;
         }
-        return roles;
+        return null;
     }
+
 }

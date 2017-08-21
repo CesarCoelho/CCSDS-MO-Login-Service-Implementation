@@ -258,8 +258,6 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
     @Override
     public LongList listRoles(Identifier idntfr, String string, MALInteraction mali) throws MALInteractionException, MALException {
         
-        LongList roles = new LongList();
-        
         // 3.3.9.2.a
         if (idntfr == null) {
             throw new IllegalArgumentException("username argument must not be null");
@@ -270,28 +268,10 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
             throw new MALInteractionException(new MALStandardError(COMHelper.INVALID_ERROR_NUMBER, null));
         }
         
-        // login the current user
-        if (!this.currentUser.isAuthenticated()) {
-            UsernamePasswordToken token = new UsernamePasswordToken(idntfr.toString(), string);
-            try {
-                this.currentUser.login(token);
-                roles = LoginServiceSecurityUtils.getRoles(currentUser);
-                this.currentUser.logout();
-            } catch (UnknownAccountException uae) {
-                // 3.3.9.2.c - unknown user
-                throw new MALInteractionException(new MALStandardError(MALHelper.UNKNOWN_ERROR_NUMBER, null));
-            } catch (IncorrectCredentialsException ice) {
-                // 3.3.9.2.c - username, password are not correct
-                throw new MALInteractionException(new MALStandardError(MALHelper.UNKNOWN_ERROR_NUMBER, null));
-            } catch (ConcurrentAccessException cae) {
-                
-            } catch (ExcessiveAttemptsException eae) {
-  
-            } catch (AuthenticationException ae) {
-                //unexpected condition?  error?
-            }
+        if (LoginServiceSecurityUtils.isUser(idntfr.getValue(), string)) {
+            LongList roles = LoginServiceSecurityUtils.getRoles(idntfr.getValue());
             return roles;
-        }    
+        }
         return null;
     }
 
