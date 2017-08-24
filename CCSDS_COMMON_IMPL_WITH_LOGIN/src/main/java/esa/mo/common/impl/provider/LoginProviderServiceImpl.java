@@ -24,8 +24,7 @@ import esa.mo.com.impl.util.COMServicesProvider;
 import esa.mo.com.impl.util.HelperArchive;
 import esa.mo.common.impl.util.LoginServiceSecurityUtils;
 import esa.mo.helpertools.connections.ConnectionProvider;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
+import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.shiro.SecurityUtils;
@@ -211,14 +210,12 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                             null, // 3.3.4.f
                             mali);
                     this.loginEventId = loginEvent;
-                    byte[] value = new byte[10];
-                    try {
-                        SecureRandom.getInstanceStrong().nextBytes(value);
-                    } catch (NoSuchAlgorithmException ex) {
-                        Logger.getLogger(LoginProviderServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
-                    }
+                    // create authId from username
+                    byte[] value = inputUsername.getValue().getBytes((Charset.forName("UTF-8")));
                     Blob authId =  new Blob(value); // 3.3.7.2.k
-                    response = new LoginResponse(authId, loginInstanceId); // 3.3.7.2.l
+                    // set the authId in the message header
+                    mali.getMessageHeader().setAuthenticationId(authId);
+                    response = new LoginResponse(authId, loginInstanceId); // 3.3.7.2.l                  
                 } else {
                     this.currentUser.logout();
                 }
@@ -304,13 +301,10 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
             throw new MALInteractionException(new MALStandardError(COMHelper.INVALID_ERROR_NUMBER, null));
         }
         
-        byte[] value = new byte[10];
-        try {
-            SecureRandom.getInstanceStrong().nextBytes(value);
-        } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(LoginProviderServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        // create authId from username
+        byte[] value = username.getValue().getBytes((Charset.forName("UTF-8")));
         Blob authId = new Blob(value); // 3.3.10.2.l
+        
         HandoverResponse response = null;
         
         if (this.currentUser.isAuthenticated()
@@ -328,6 +322,8 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                                     this.connection.getPrimaryConnectionDetails().getProviderURI()),
                             objs,
                             mali);
+                    // set the authId in the message header 
+                    mali.getMessageHeader().setAuthenticationId(authId);
                     response = new HandoverResponse(authId, this.loginInstanceId);
                 } else {
                     return null;
@@ -364,6 +360,8 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                                 this.connection.getPrimaryConnectionDetails().getProviderURI()),
                         profiles,
                         mali);
+                // set the authId in the message header
+                mali.getMessageHeader().setAuthenticationId(authId);
                 response = new HandoverResponse(authId, loginInstanceIds.get(0)); // 3.3.10.2.l, 3.3.10.2.m
             }
         }
