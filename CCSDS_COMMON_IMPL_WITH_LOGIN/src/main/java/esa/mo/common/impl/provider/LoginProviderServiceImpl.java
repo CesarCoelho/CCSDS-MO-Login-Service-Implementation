@@ -219,7 +219,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                 } else {
                     this.currentUser.logout();
                 }
-            } catch (UnknownAccountException uae) {
+            } catch (UnknownAccountException uae) { 
                 // 3.3.7.2.e - unknown user
                 throw new MALInteractionException(new MALStandardError(MALHelper.UNKNOWN_ERROR_NUMBER, null));
             } catch (IncorrectCredentialsException ice) {

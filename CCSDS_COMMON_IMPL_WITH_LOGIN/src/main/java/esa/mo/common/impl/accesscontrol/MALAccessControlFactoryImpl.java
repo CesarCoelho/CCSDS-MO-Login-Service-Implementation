@@ -20,28 +20,31 @@
  */
 package esa.mo.common.impl.accesscontrol;
 
+import java.util.Map;
+import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.accesscontrol.MALAccessControl;
-import org.ccsds.moims.mo.mal.accesscontrol.MALCheckErrorException;
-import org.ccsds.moims.mo.mal.transport.MALMessage;
+import org.ccsds.moims.mo.mal.accesscontrol.MALAccessControlFactory;
 
 /**
  *
  * @author Andreea Pirvulescu
  */
-public class LoginServiceAccessControl implements MALAccessControl{
+public class MALAccessControlFactoryImpl extends MALAccessControlFactory{
+
+    private static MALAccessControlImpl accessControl = null;
     
     /**
      * 
-     * @param malm
+     * @param properties
      * @return
-     * @throws IllegalArgumentException
-     * @throws MALCheckErrorException 
+     * @throws MALException 
      */
     @Override
-    public MALMessage check(MALMessage malm) throws IllegalArgumentException, MALCheckErrorException {
-        if ((malm != null) && (malm.getHeader() != null)) {
+    public MALAccessControl createAccessControl(Map properties) throws MALException {
+        if (accessControl == null) {
+            accessControl = new MALAccessControlImpl();
         }
-        return malm;
+        return accessControl;
     }
-
+    
 }
