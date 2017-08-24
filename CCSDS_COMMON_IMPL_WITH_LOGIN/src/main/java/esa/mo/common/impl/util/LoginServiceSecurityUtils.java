@@ -55,6 +55,20 @@ public class LoginServiceSecurityUtils {
         }
         return null;
     }
+    
+    /**
+     * Returns true if the username exists
+     *
+     * @param username
+     * @return true if the username exists; false otherwise
+     */
+    public static boolean isUsernameValid(String username) {
+        Realm realm = getRealm();
+        // get the users defined in shiro.ini
+        Map allUsers = ((IniRealm) realm).getIni().get("users");
+
+        return (allUsers != null) && allUsers.containsKey(username);
+    }
 
     /**
      * Returns true if the username and password combination exists
