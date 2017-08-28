@@ -54,8 +54,8 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         initComponents();
         this.serviceCommonLogin = serviceCommonLogin;
         loginTable = new LoginTablePanel(serviceCommonLogin.getCOMServices().getArchiveService());
-        this.logoutButton.setVisible(false);
-        this.handoverButton.setVisible(false);
+        this.logoutButton.setEnabled(false);
+        this.handoverButton.setEnabled(false);
         this.listRolesScrollPane.setVisible(false);
         this.userTextPane.setVisible(false);
         this.userScrollPane.setVisible(false);
@@ -84,8 +84,6 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
             LoginResponse loginResponse = this.serviceCommonLogin.getLoginStub().login(profile, password);
             if (loginResponse != null) {
                 this.authenticationStatus = true;
-                this.listRolesButton.setVisible(false);
-                this.listRolesScrollPane.setVisible(false);
                 this.userTextPane.setVisible(true);
                 this.userScrollPane.setVisible(true);
                 this.userTextPane.setText("You are logged in as user " + username + " with role " + role);
@@ -97,9 +95,9 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         }
         
         if (this.isAuthenticated()) {
-            this.loginButton.setVisible(false);
-            this.logoutButton.setVisible(true);
-            this.handoverButton.setVisible(true);
+            this.loginButton.setEnabled(false);
+            this.logoutButton.setEnabled(true);
+            this.handoverButton.setEnabled(true);
         }
     }
     
@@ -201,6 +199,9 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(userScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 294, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addGroup(layout.createSequentialGroup()
                 .addGap(72, 72, 72)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -208,19 +209,16 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
                         .addComponent(loginButton, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(listRolesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                            .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(listRolesScrollPane)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                 .addGap(74, 74, 74)
                                 .addComponent(logoutButton)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(listRolesButton)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(handoverButton)
+                                .addComponent(listRolesButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(handoverButton)))
                         .addContainerGap(75, Short.MAX_VALUE))))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(userScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 294, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -233,9 +231,9 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
                         .addComponent(logoutButton)
                         .addComponent(listRolesButton)
                         .addComponent(handoverButton)))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(listRolesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(57, Short.MAX_VALUE))
+                .addContainerGap(69, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -256,8 +254,9 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         }
         
         this.authenticationStatus = false;
-        this.serviceCommonLogin.closeConnection();
-        this.getParent().removeAll();
+        this.loginButton.setEnabled(true);
+        this.logoutButton.setEnabled(false);
+        this.handoverButton.setEnabled(false);
         
     }//GEN-LAST:event_logoutButtonActionPerformed
 
