@@ -54,7 +54,7 @@ public class MALAccessControlImpl implements MALAccessControl{
      */
     @Override
     public MALMessage check(MALMessage malm) throws IllegalArgumentException, MALCheckErrorException {    
-        
+              
         if ((malm != null) && (malm.getHeader() != null)) {
             int serviceArea = malm.getHeader().getServiceArea().getValue();
             int service = malm.getHeader().getService().getValue();
@@ -65,37 +65,45 @@ public class MALAccessControlImpl implements MALAccessControl{
                 if (operation == 1 || operation == 4) {
                     try {
                         Profile prfl = (Profile) malm.getBody().getBodyElement(0, malm);
-                        newAuthId = generateAuthId(prfl);
-                        malm.getHeader().setAuthenticationId(newAuthId);
-                        authenticationFlag = true;
+                        String str = malm.getBody().getBodyElement(1, malm).toString();
+                        String username = prfl.getUsername().getValue();
+                        String role = String.valueOf(prfl.getRole());
+                        if (LoginServiceSecurityUtils.isUser(username, str) && 
+                                LoginServiceSecurityUtils.hasRole(username, role)) {
+                            newAuthId = generateAuthId(prfl);
+                            authenticationFlag = true;
+                        }
                     } catch (MALException ex) {
                         Logger.getLogger(MALAccessControlImpl.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
-                // logout && listRoles 
-                if (operation == 2 || operation == 3) {
+                // logout
+                if (operation == 2) {
                     authenticationFlag = false;
-                    return malm;
                 }
+                return malm;
+            }
+            // consumer
+            if (malm.getHeader().getInteractionStage().getValue() == 1) {
+                malm.getHeader().setAuthenticationId(newAuthId);
             }
             if (authenticationFlag && !malm.getHeader().getIsErrorMessage()) {
                 byte[] authId;
                 try {
-                    authId = malm.getHeader().getAuthenticationId().getValue();                  
+                    authId = malm.getHeader().getAuthenticationId().getValue();
                 } catch (MALException exc) {
+                    // 6.2.3.2.7
                     throw new MALCheckErrorException(new MALStandardError(MALHelper.AUTHENTICATION_FAIL_ERROR_NUMBER,
                             new Union("Could not get the authentication id: " + exc)),
                             malm.getQoSProperties());
-                }
+                } 
                 if ((authId != null) && (authId.length > 0)) {
+                    // 6.2.3.2.7
                     if (!LoginServiceSecurityUtils.hasRole(new String(Arrays.copyOfRange(authId, 0, authId.length - 1),
                             StandardCharsets.UTF_16), String.valueOf(authId[authId.length - 1]))) {
                         throw new MALCheckErrorException(new MALStandardError(MALHelper.AUTHORISATION_FAIL_ERROR_NUMBER,
-                                new Union("Failed authorization")), malm.getQoSProperties());
-                        
+                                new Union("Failed authorization")), malm.getQoSProperties());                    
                     }
-                } else {
-                    malm.getHeader().setAuthenticationId(newAuthId);
                 }
             }
         } else {
