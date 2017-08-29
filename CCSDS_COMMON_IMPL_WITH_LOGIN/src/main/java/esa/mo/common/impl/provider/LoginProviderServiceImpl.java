@@ -171,7 +171,6 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
         // login the current user
         if (!this.currentUser.isAuthenticated()) {
             UsernamePasswordToken token = new UsernamePasswordToken(inputUsername.toString(), string);
-            //token.setRememberMe(true);
             try {
                 this.currentUser.login(token);
                 if (this.currentUser.hasRole(String.valueOf(inputRole))) {
@@ -210,16 +209,12 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                             null, // 3.3.4.f
                             mali);
                     this.loginEventId = loginEvent;
-                    // create authId from username
-                    byte[] value = inputUsername.getValue().getBytes((Charset.forName("UTF-8")));
-                    Blob authId =  new Blob(value); // 3.3.7.2.k
-                    // set the authId in the message header
-                    mali.getMessageHeader().setAuthenticationId(authId);
-                    response = new LoginResponse(authId, loginInstanceId); // 3.3.7.2.l                  
+                    Blob authId = LoginServiceSecurityUtils.generateAuthId(prfl);  // 3.3.7.2.k
+                    response = new LoginResponse(authId, loginInstanceId); // 3.3.7.2.l             
                 } else {
                     this.currentUser.logout();
                 }
-            } catch (UnknownAccountException uae) { 
+            } catch (UnknownAccountException uae) {
                 // 3.3.7.2.e - unknown user
                 throw new MALInteractionException(new MALStandardError(MALHelper.UNKNOWN_ERROR_NUMBER, null));
             } catch (IncorrectCredentialsException ice) {
@@ -301,9 +296,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
             throw new MALInteractionException(new MALStandardError(COMHelper.INVALID_ERROR_NUMBER, null));
         }
         
-        // create authId from username
-        byte[] value = username.getValue().getBytes((Charset.forName("UTF-8")));
-        Blob authId = new Blob(value); // 3.3.10.2.l
+        Blob authId = LoginServiceSecurityUtils.generateAuthId(prfl); // 3.3.10.2.l
         
         HandoverResponse response = null;
         
@@ -322,8 +315,6 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                                     this.connection.getPrimaryConnectionDetails().getProviderURI()),
                             objs,
                             mali);
-                    // set the authId in the message header 
-                    mali.getMessageHeader().setAuthenticationId(authId);
                     response = new HandoverResponse(authId, this.loginInstanceId);
                 } else {
                     return null;
@@ -360,8 +351,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                                 this.connection.getPrimaryConnectionDetails().getProviderURI()),
                         profiles,
                         mali);
-                // set the authId in the message header
-                mali.getMessageHeader().setAuthenticationId(authId);
+                
                 response = new HandoverResponse(authId, loginInstanceIds.get(0)); // 3.3.10.2.l, 3.3.10.2.m
             }
         }

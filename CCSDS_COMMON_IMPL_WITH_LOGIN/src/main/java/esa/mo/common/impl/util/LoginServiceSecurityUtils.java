@@ -20,6 +20,7 @@
  */
 package esa.mo.common.impl.util;
 
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -30,6 +31,8 @@ import org.apache.shiro.authc.credential.DefaultPasswordService;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.realm.text.IniRealm;
+import org.ccsds.moims.mo.common.login.structures.Profile;
+import org.ccsds.moims.mo.mal.structures.Blob;
 import org.ccsds.moims.mo.mal.structures.LongList;
 
 /**
@@ -54,20 +57,6 @@ public class LoginServiceSecurityUtils {
             }
         }
         return null;
-    }
-    
-    /**
-     * Returns true if the username exists
-     *
-     * @param username
-     * @return true if the username exists; false otherwise
-     */
-    public static boolean isUsernameValid(String username) {
-        Realm realm = getRealm();
-        // get the users defined in shiro.ini
-        Map allUsers = ((IniRealm) realm).getIni().get("users");
-
-        return (allUsers != null) && allUsers.containsKey(username);
     }
 
     /**
@@ -144,6 +133,25 @@ public class LoginServiceSecurityUtils {
             return roles;
         }
         return null;
+    }
+    
+    /**
+     *
+     * @param prfl
+     * @return authentication id
+     */
+    public static Blob generateAuthId(Profile prfl) {
+        
+        // authId = username + role
+        byte[] value0 = prfl.getUsername().getValue().getBytes((Charset.forName("UTF-16")));
+        byte value1 = prfl.getRole().byteValue();
+        
+        byte[] value = new byte[value0.length + 1];
+        System.arraycopy(value0, 0, value, 0, value0.length);
+        value[value0.length] = value1;
+        Blob authId = new Blob(value);
+
+        return authId;
     }
 
 }

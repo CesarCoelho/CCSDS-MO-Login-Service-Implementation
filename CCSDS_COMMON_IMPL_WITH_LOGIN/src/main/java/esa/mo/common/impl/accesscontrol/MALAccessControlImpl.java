@@ -70,7 +70,7 @@ public class MALAccessControlImpl implements MALAccessControl{
                         String role = String.valueOf(prfl.getRole());
                         if (LoginServiceSecurityUtils.isUser(username, str) && 
                                 LoginServiceSecurityUtils.hasRole(username, role)) {
-                            newAuthId = generateAuthId(prfl);
+                            newAuthId = LoginServiceSecurityUtils.generateAuthId(prfl);
                             authenticationFlag = true;
                         }
                     } catch (MALException ex) {
@@ -83,10 +83,12 @@ public class MALAccessControlImpl implements MALAccessControl{
                 }
                 return malm;
             }
-            // consumer
+            
+            // consumer 
             if (malm.getHeader().getInteractionStage().getValue() == 1) {
                 malm.getHeader().setAuthenticationId(newAuthId);
             }
+            
             if (authenticationFlag && !malm.getHeader().getIsErrorMessage()) {
                 byte[] authId;
                 try {
@@ -112,22 +114,4 @@ public class MALAccessControlImpl implements MALAccessControl{
         return malm;
     }
     
-    /**
-     * 
-     * @param prfl
-     * @return authentication id
-     */
-    public static Blob generateAuthId(Profile prfl) {
-        
-        byte[] value0 = prfl.getUsername().getValue().getBytes((Charset.forName("UTF-16")));
-        byte value1 = prfl.getRole().byteValue();
-        
-        byte[] value = new byte[value0.length + 1];
-        System.arraycopy(value0, 0, value, 0, value0.length);
-        value[value0.length] = value1;
-        Blob authId = new Blob(value);
-        
-        return authId;
-    }
-
 }
