@@ -73,6 +73,9 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         this.handoverSuccess = result;
     }
     
+    /**
+     * Calls the login operation
+     */
     public void checkLoginData() {
         Identifier username = new Identifier(this.data[0]);
         Long role = Long.valueOf(this.data[1]);
@@ -101,6 +104,9 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         }
     }
     
+    /**
+     * Calls the listRoles operation
+     */
     public void checkListRolesData() {
         Identifier username = new Identifier(this.data[0]);
         String password = this.data[1];
@@ -126,6 +132,9 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
         }
     }
     
+    /**
+     * Calls the handover operation
+     */
     public void checkHandoverData() {
         Identifier username = new Identifier(this.data[0]);
         Long role = Long.valueOf(this.data[1]);

@@ -21,7 +21,6 @@
 package esa.mo.common.impl.accesscontrol;
 
 import esa.mo.common.impl.util.LoginServiceSecurityUtils;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.logging.Level;
