@@ -136,7 +136,8 @@ public class LoginServiceSecurityUtils {
     }
     
     /**
-     *
+     * Generates an authentication id
+     * 
      * @param prfl
      * @return authentication id
      */

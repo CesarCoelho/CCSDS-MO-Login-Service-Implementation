@@ -36,7 +36,7 @@ public class MALAccessControlFactoryImpl extends MALAccessControlFactory{
     /**
      * 
      * @param properties
-     * @return
+     * @return an instance of MALAccessControl
      * @throws MALException 
      */
     @Override
