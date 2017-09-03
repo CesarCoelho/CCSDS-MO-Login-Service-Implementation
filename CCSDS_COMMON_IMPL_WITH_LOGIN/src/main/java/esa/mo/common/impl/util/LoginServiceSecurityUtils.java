@@ -28,9 +28,12 @@ import java.util.List;
 import java.util.Map;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.credential.DefaultPasswordService;
+import org.apache.shiro.config.IniSecurityManagerFactory;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.realm.text.IniRealm;
+import org.apache.shiro.subject.Subject;
+import org.apache.shiro.util.Factory;
 import org.ccsds.moims.mo.common.login.structures.Profile;
 import org.ccsds.moims.mo.mal.structures.Blob;
 import org.ccsds.moims.mo.mal.structures.LongList;
@@ -40,13 +43,45 @@ import org.ccsds.moims.mo.mal.structures.LongList;
  * @author Andreea Pirvulescu
  */
 public class LoginServiceSecurityUtils {
-
+    
+    private static Subject currentUser;
+    
+    /**
+     * Initialize Security Manager
+     */
+    public static void initSecurityManager() {
+        // load shiro configuration
+        Factory<org.apache.shiro.mgt.SecurityManager> factory
+                = new IniSecurityManagerFactory("classpath:shiro.ini");
+        org.apache.shiro.mgt.SecurityManager securityManager = factory.getInstance();
+        // set the SecurityManager
+        SecurityUtils.setSecurityManager(securityManager);        
+    }
+    
+    /**
+     * Sets the current executing user
+     * 
+     * @param subject
+     */
+    public static void setSubject(Subject subject) {
+       currentUser = subject;
+    }
+    
+    /**
+     * Returns the current executing user
+     * 
+     * @return currentUser
+     */
+    public static Subject getSubject() {
+        return currentUser;
+    }
+    
     /**
      * Returns an instance of IniRealm
      *
      * @return realm
      */
-    public static Realm getRealm() {
+    private static Realm getRealm() {
         RealmSecurityManager securityManager = (RealmSecurityManager) SecurityUtils.getSecurityManager();
         Collection<Realm> realms = securityManager.getRealms();
 
@@ -66,7 +101,7 @@ public class LoginServiceSecurityUtils {
      * @param pass
      * @return true if the user exists; false otherwise
      */
-    public static boolean isUser(String username, String pass) {
+    public static boolean isUser(String username, String pass) {      
         Realm realm = getRealm();
         // get the users defined in shiro.ini
         Map allUsers = ((IniRealm) realm).getIni().get("users");

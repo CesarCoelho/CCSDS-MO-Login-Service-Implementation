@@ -28,10 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
-import org.apache.shiro.config.IniSecurityManagerFactory;
-import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.subject.Subject;
-import org.apache.shiro.util.Factory;
 import org.ccsds.moims.mo.com.COMHelper;
 import org.ccsds.moims.mo.com.COMService;
 import org.ccsds.moims.mo.com.structures.ObjectId;
@@ -70,11 +67,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
     private COMServicesProvider comServices; 
     private Long loginInstanceId;
     private Long loginEventId;
-    private Subject currentUser;
-    
-    // load shiro configuration
-    private final Factory<SecurityManager> factory = new IniSecurityManagerFactory("classpath:shiro.ini");
-    private final SecurityManager securityManager = factory.getInstance();
+    private Subject currentUser;   
     
     /**
      * creates the MAL objects, the publisher used to create updates and starts
@@ -110,11 +103,12 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
             connection.closeAll();
         }
         
-        // set the SecurityManager
-        SecurityUtils.setSecurityManager(securityManager);
-        
-        // get the currently executing user
+        // init the SecurityManager
+        LoginServiceSecurityUtils.initSecurityManager();
+        // get the currently executing user  
         this.currentUser = SecurityUtils.getSubject();
+        // keep the currentUser for accessControl processing 
+        LoginServiceSecurityUtils.setSubject(currentUser);
 
         service = LoginHelper.LOGIN_SERVICE;
         loginServiceProvider = connection.startService(LoginHelper.LOGIN_SERVICE_NAME.toString(), 
@@ -205,7 +199,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                             mali);
                     this.loginEventId = loginEvent;
                     Blob authId = LoginServiceSecurityUtils.generateAuthId(prfl);  // 3.3.7.2.k
-                    response = new LoginResponse(authId, loginInstanceId); // 3.3.7.2.l             
+                    response = new LoginResponse(authId, loginInstanceId); // 3.3.7.2.l
                 } else {
                     this.currentUser.logout();
                 }

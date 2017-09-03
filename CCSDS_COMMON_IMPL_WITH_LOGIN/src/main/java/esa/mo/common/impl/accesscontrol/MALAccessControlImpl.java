@@ -21,10 +21,12 @@
 package esa.mo.common.impl.accesscontrol;
 
 import esa.mo.common.impl.util.LoginServiceSecurityUtils;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.shiro.subject.Subject;
+import org.ccsds.moims.mo.common.CommonHelper;
+import org.ccsds.moims.mo.common.directory.DirectoryHelper;
+import org.ccsds.moims.mo.common.login.LoginHelper;
 import org.ccsds.moims.mo.common.login.structures.Profile;
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.MALHelper;
@@ -34,83 +36,92 @@ import org.ccsds.moims.mo.mal.accesscontrol.MALCheckErrorException;
 import org.ccsds.moims.mo.mal.structures.Blob;
 import org.ccsds.moims.mo.mal.structures.Union;
 import org.ccsds.moims.mo.mal.transport.MALMessage;
+import org.ccsds.moims.mo.softwaremanagement.SoftwareManagementHelper;
 
 /**
  *
  * @author Andreea Pirvulescu
  */
-public class MALAccessControlImpl implements MALAccessControl{
-    
+public class MALAccessControlImpl implements MALAccessControl {
+
     Boolean authenticationFlag = false;
-    Blob newAuthId = null; 
-    
+    Blob newAuthId = null;
+
     /**
-     * 
+     *
      * @param malm
      * @return
      * @throws IllegalArgumentException
-     * @throws MALCheckErrorException 
+     * @throws MALCheckErrorException
      */
     @Override
-    public MALMessage check(MALMessage malm) throws IllegalArgumentException, MALCheckErrorException {    
-              
-        if ((malm != null) && (malm.getHeader() != null)) {
+    public MALMessage check(MALMessage malm) throws IllegalArgumentException, MALCheckErrorException {
+
+        if (malm == null) {
+            throw new IllegalArgumentException("Message argument must not be null"); // 6.2.3.2.4
+        }
+
+        // Software management
+        if (malm.getHeader().getServiceArea().getValue()
+                == SoftwareManagementHelper._SOFTWAREMANAGEMENT_AREA_NUMBER) {
+            return malm;
+        }
+
+        // Directory service
+        if ((malm.getHeader().getServiceArea().getValue() == CommonHelper._COMMON_AREA_NUMBER)
+                && (malm.getHeader().getService().getValue() == DirectoryHelper._DIRECTORY_SERVICE_NUMBER)) {
+            return malm;
+        }
+
+        if (malm.getHeader() != null) {
             int serviceArea = malm.getHeader().getServiceArea().getValue();
             int service = malm.getHeader().getService().getValue();
             int operation = malm.getHeader().getOperation().getValue();
             // login service
-            if (serviceArea == 3 && service == 2) {
-                // login && handover
-                if (operation == 1 || operation == 4) {
+            if (serviceArea == CommonHelper._COMMON_AREA_NUMBER
+                    && service == LoginHelper.LOGIN_SERVICE_NUMBER.getValue()) {
+                // login || handover
+                if (operation == LoginHelper._LOGIN_OP_NUMBER
+                        || operation == LoginHelper.HANDOVER_OP_NUMBER.getValue()) {
                     try {
                         Profile prfl = (Profile) malm.getBody().getBodyElement(0, malm);
-                        String str = malm.getBody().getBodyElement(1, malm).toString();
-                        String username = prfl.getUsername().getValue();
-                        String role = String.valueOf(prfl.getRole());
-                        if (LoginServiceSecurityUtils.isUser(username, str) && 
-                                LoginServiceSecurityUtils.hasRole(username, role)) {
-                            newAuthId = LoginServiceSecurityUtils.generateAuthId(prfl);
-                            authenticationFlag = true;
-                        }
+                        newAuthId = LoginServiceSecurityUtils.generateAuthId(prfl);
+                        authenticationFlag = true;
                     } catch (MALException ex) {
                         Logger.getLogger(MALAccessControlImpl.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
                 // logout
-                if (operation == 2) {
+                if (operation == LoginHelper._LOGOUT_OP_NUMBER) {
                     authenticationFlag = false;
+                    newAuthId = null;
                 }
+                malm.getHeader().setAuthenticationId(newAuthId);
                 return malm;
             }
-            
-            // consumer 
-            if (malm.getHeader().getInteractionStage().getValue() == 1) {
-                malm.getHeader().setAuthenticationId(newAuthId);
-            }
-            
+
             if (authenticationFlag && !malm.getHeader().getIsErrorMessage()) {
-                byte[] authId;
-                try {
-                    authId = malm.getHeader().getAuthenticationId().getValue();
-                } catch (MALException exc) {
+                Subject subject = LoginServiceSecurityUtils.getSubject();
+                if ((newAuthId != null) && (newAuthId.getLength() > 0) && subject.isAuthenticated()) {
+                    malm.getHeader().setAuthenticationId(newAuthId);
+                    if (subject.isPermitted(serviceArea + ":" + service + ":" + operation)) {
+                        return malm;
+                    } else {
+                        // 6.2.3.2.7
+                        throw new MALCheckErrorException(new MALStandardError(MALHelper.AUTHORISATION_FAIL_ERROR_NUMBER,
+                                new Union("Failed authorization")), malm.getQoSProperties()); // 3.6.1.8.3.3.c   
+                    }
+                } else {
                     // 6.2.3.2.7
                     throw new MALCheckErrorException(new MALStandardError(MALHelper.AUTHENTICATION_FAIL_ERROR_NUMBER,
-                            new Union("Could not get the authentication id: " + exc)),
-                            malm.getQoSProperties());
-                } 
-                if ((authId != null) && (authId.length > 0)) {
-                    // 6.2.3.2.7
-                    if (!LoginServiceSecurityUtils.hasRole(new String(Arrays.copyOfRange(authId, 0, authId.length - 1),
-                            StandardCharsets.UTF_16), String.valueOf(authId[authId.length - 1]))) {
-                        throw new MALCheckErrorException(new MALStandardError(MALHelper.AUTHORISATION_FAIL_ERROR_NUMBER,
-                                new Union("Failed authorization")), malm.getQoSProperties());                    
-                    }
+                            new Union("Failed authentication")),
+                            malm.getQoSProperties()); // 3.6.1.8.3.3.b
                 }
             }
-        } else {
-            throw new IllegalArgumentException("Message argument must not be null"); // 6.2.3.2.4
         }
+        // 3.6.1.4.a
+        malm.getHeader().setIsErrorMessage(true);
         return malm;
     }
-    
+
 }

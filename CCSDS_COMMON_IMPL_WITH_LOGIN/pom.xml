@@ -99,6 +99,12 @@
             <artifactId>commons-logging</artifactId>
             <version>1.2</version>
         </dependency>
+        <dependency>
+            <groupId>int.esa.ccsds.mo</groupId>
+            <artifactId>API_SM</artifactId>
+            <version>0.1.1-SNAPSHOT</version>
+            <type>jar</type>
+        </dependency>
     </dependencies>
   
     <build>
