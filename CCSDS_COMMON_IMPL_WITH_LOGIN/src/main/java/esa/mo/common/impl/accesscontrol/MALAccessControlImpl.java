@@ -37,6 +37,7 @@ import org.ccsds.moims.mo.mal.structures.Blob;
 import org.ccsds.moims.mo.mal.structures.Union;
 import org.ccsds.moims.mo.mal.transport.MALMessage;
 import org.ccsds.moims.mo.softwaremanagement.SoftwareManagementHelper;
+import org.ccsds.moims.mo.softwaremanagement.heartbeat.HeartbeatHelper;
 
 /**
  *
@@ -56,28 +57,30 @@ public class MALAccessControlImpl implements MALAccessControl {
      */
     @Override
     public MALMessage check(MALMessage malm) throws IllegalArgumentException, MALCheckErrorException {
-
+        
         if (malm == null) {
             throw new IllegalArgumentException("Message argument must not be null"); // 6.2.3.2.4
-        }
-
-        // Software management
-        if (malm.getHeader().getServiceArea().getValue()
-                == SoftwareManagementHelper._SOFTWAREMANAGEMENT_AREA_NUMBER) {
-            return malm;
-        }
-
-        // Directory service
-        if ((malm.getHeader().getServiceArea().getValue() == CommonHelper._COMMON_AREA_NUMBER)
-                && (malm.getHeader().getService().getValue() == DirectoryHelper._DIRECTORY_SERVICE_NUMBER)) {
-            return malm;
         }
 
         if (malm.getHeader() != null) {
             int serviceArea = malm.getHeader().getServiceArea().getValue();
             int service = malm.getHeader().getService().getValue();
             int operation = malm.getHeader().getOperation().getValue();
-            // login service
+            
+            // Heartbeat service
+            if (serviceArea == SoftwareManagementHelper._SOFTWAREMANAGEMENT_AREA_NUMBER
+                    && service == HeartbeatHelper.HEARTBEAT_SERVICE_NUMBER.getValue()) {
+                return malm;
+            }
+
+            // Directory service - lookupProvider operation
+            if (serviceArea == CommonHelper._COMMON_AREA_NUMBER
+                    && service == DirectoryHelper._DIRECTORY_SERVICE_NUMBER
+                    && operation == DirectoryHelper.LOOKUPPROVIDER_OP_NUMBER.getValue()) {
+                return malm;
+            }
+
+            // Login service
             if (serviceArea == CommonHelper._COMMON_AREA_NUMBER
                     && service == LoginHelper.LOGIN_SERVICE_NUMBER.getValue()) {
                 // login || handover
