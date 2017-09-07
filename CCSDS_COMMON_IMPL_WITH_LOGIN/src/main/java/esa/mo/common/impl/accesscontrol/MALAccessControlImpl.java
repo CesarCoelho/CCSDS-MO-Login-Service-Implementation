@@ -36,8 +36,6 @@ import org.ccsds.moims.mo.mal.accesscontrol.MALCheckErrorException;
 import org.ccsds.moims.mo.mal.structures.Blob;
 import org.ccsds.moims.mo.mal.structures.Union;
 import org.ccsds.moims.mo.mal.transport.MALMessage;
-import org.ccsds.moims.mo.softwaremanagement.SoftwareManagementHelper;
-import org.ccsds.moims.mo.softwaremanagement.heartbeat.HeartbeatHelper;
 
 /**
  *
@@ -67,12 +65,6 @@ public class MALAccessControlImpl implements MALAccessControl {
             int service = malm.getHeader().getService().getValue();
             int operation = malm.getHeader().getOperation().getValue();
             
-            // Heartbeat service
-            if (serviceArea == SoftwareManagementHelper._SOFTWAREMANAGEMENT_AREA_NUMBER
-                    && service == HeartbeatHelper.HEARTBEAT_SERVICE_NUMBER.getValue()) {
-                return malm;
-            }
-
             // Directory service - lookupProvider operation
             if (serviceArea == CommonHelper._COMMON_AREA_NUMBER
                     && service == DirectoryHelper._DIRECTORY_SERVICE_NUMBER
