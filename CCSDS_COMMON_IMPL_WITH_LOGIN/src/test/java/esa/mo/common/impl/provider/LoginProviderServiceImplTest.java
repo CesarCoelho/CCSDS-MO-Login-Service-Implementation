@@ -165,6 +165,8 @@ public class LoginProviderServiceImplTest {
     @Test
     public void testListRoles() throws Exception {
         
+        prfl.setUsername(new Identifier("test"));
+        
         LongList expResult = new LongList();
         expResult.add(new Long(2));
         LongList result = instance.listRoles(prfl.getUsername(), string, mali);
