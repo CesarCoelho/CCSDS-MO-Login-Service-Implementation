@@ -67,7 +67,19 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
     private COMServicesProvider comServices; 
     private Long loginInstanceId;
     private Long loginEventId;
-    private Subject currentUser;   
+    private final Subject currentUser;
+    
+    /**
+     * Initialize the security manager
+     */
+    public LoginProviderServiceImpl() {
+        // init the SecurityManager
+        LoginServiceSecurityUtils.initSecurityManager();
+        // get the currently executing user  
+        this.currentUser = SecurityUtils.getSubject();
+        // keep the currentUser for accessControl processing 
+        LoginServiceSecurityUtils.setSubject(currentUser);
+    }
     
     /**
      * creates the MAL objects, the publisher used to create updates and starts
@@ -103,12 +115,6 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
             connection.closeAll();
         }
         
-        // init the SecurityManager
-        LoginServiceSecurityUtils.initSecurityManager();
-        // get the currently executing user  
-        this.currentUser = SecurityUtils.getSubject();
-        // keep the currentUser for accessControl processing 
-        LoginServiceSecurityUtils.setSubject(currentUser);
 
         service = LoginHelper.LOGIN_SERVICE;
         loginServiceProvider = connection.startService(LoginHelper.LOGIN_SERVICE_NAME.toString(), 
@@ -199,7 +205,6 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                             mali);
                     this.loginEventId = loginEvent;
                     Blob authId = LoginServiceSecurityUtils.generateAuthId(prfl);  // 3.3.7.2.k
-                    response = new LoginResponse(authId, loginInstanceId); // 3.3.7.2.l
                 } else {
                     this.currentUser.logout();
                 }
