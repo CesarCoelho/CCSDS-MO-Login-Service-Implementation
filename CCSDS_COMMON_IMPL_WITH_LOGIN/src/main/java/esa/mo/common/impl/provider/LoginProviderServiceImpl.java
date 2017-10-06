@@ -205,6 +205,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                             mali);
                     this.loginEventId = loginEvent;
                     Blob authId = LoginServiceSecurityUtils.generateAuthId(prfl);  // 3.3.7.2.k
+                    response = new LoginResponse(authId, loginInstanceId); // 3.3.7.2.l 
                 } else {
                     this.currentUser.logout();
                 }

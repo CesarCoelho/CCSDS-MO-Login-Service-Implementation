@@ -35,7 +35,7 @@ public class LoginNanoSatMOConnectorImpl extends NanoSatMOConnectorImpl {
     private LoginProviderServiceImpl loginService;
 
     public LoginNanoSatMOConnectorImpl(MonitorAndControlNMFAdapter mcAdapter) {
-        super(mcAdapter);
+        super.init(mcAdapter);
     }
 
     @Override
