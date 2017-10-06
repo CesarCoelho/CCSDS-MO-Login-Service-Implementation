@@ -287,7 +287,7 @@ public class LoginConsumerPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane listRolesScrollPane;
     private javax.swing.JButton loginButton;
     private javax.swing.JButton logoutButton;
-    private javax.swing.JList<String> rolesList;
+    private javax.swing.JList rolesList;
     private javax.swing.JScrollPane userScrollPane;
     private javax.swing.JTextPane userTextPane;
     // End of variables declaration//GEN-END:variables
