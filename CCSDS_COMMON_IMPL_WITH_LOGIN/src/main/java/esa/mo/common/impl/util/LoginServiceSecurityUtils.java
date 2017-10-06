@@ -20,6 +20,7 @@
  */
 package esa.mo.common.impl.util;
 
+import esa.mo.helpertools.helpers.HelperMisc;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
@@ -51,8 +52,12 @@ public class LoginServiceSecurityUtils {
      */
     public static void initSecurityManager() {
         // load shiro configuration
+        String config = System.getProperty(HelperMisc.INI_CONFIGURATION);
+        if (config == null) {
+            config = "classpath:shiro.ini";
+        }
         Factory<org.apache.shiro.mgt.SecurityManager> factory
-                = new IniSecurityManagerFactory("classpath:shiro.ini");
+                = new IniSecurityManagerFactory(config);
         org.apache.shiro.mgt.SecurityManager securityManager = factory.getInstance();
         // set the SecurityManager
         SecurityUtils.setSecurityManager(securityManager);        
