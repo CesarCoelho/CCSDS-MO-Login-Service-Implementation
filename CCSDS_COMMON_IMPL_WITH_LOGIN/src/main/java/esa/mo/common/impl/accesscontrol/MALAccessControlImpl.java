@@ -23,18 +23,14 @@ package esa.mo.common.impl.accesscontrol;
 import esa.mo.common.impl.util.LoginServiceSecurityUtils;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.shiro.subject.Subject;
 import org.ccsds.moims.mo.common.CommonHelper;
 import org.ccsds.moims.mo.common.directory.DirectoryHelper;
 import org.ccsds.moims.mo.common.login.LoginHelper;
 import org.ccsds.moims.mo.common.login.structures.Profile;
 import org.ccsds.moims.mo.mal.MALException;
-import org.ccsds.moims.mo.mal.MALHelper;
-import org.ccsds.moims.mo.mal.MALStandardError;
 import org.ccsds.moims.mo.mal.accesscontrol.MALAccessControl;
 import org.ccsds.moims.mo.mal.accesscontrol.MALCheckErrorException;
 import org.ccsds.moims.mo.mal.structures.Blob;
-import org.ccsds.moims.mo.mal.structures.Union;
 import org.ccsds.moims.mo.mal.transport.MALMessage;
 
 /**
@@ -96,7 +92,7 @@ public class MALAccessControlImpl implements MALAccessControl {
             }
 
             if (authenticationFlag && !malm.getHeader().getIsErrorMessage()) {
-                Subject subject = LoginServiceSecurityUtils.getSubject();
+                /*Subject subject = LoginServiceSecurityUtils.getSubject();
                 if ((newAuthId != null) && (newAuthId.getLength() > 0) && subject.isAuthenticated()) {
                     malm.getHeader().setAuthenticationId(newAuthId);
                     if (subject.isPermitted(serviceArea + ":" + service + ":" + operation)) {
@@ -111,11 +107,12 @@ public class MALAccessControlImpl implements MALAccessControl {
                     throw new MALCheckErrorException(new MALStandardError(MALHelper.AUTHENTICATION_FAIL_ERROR_NUMBER,
                             new Union("Failed authentication")),
                             malm.getQoSProperties()); // 3.6.1.8.3.3.b
-                }
+                }*/
             }
         }
+        
         // 3.6.1.4.a
-        malm.getHeader().setIsErrorMessage(true);
+        //malm.getHeader().setIsErrorMessage(true);
         return malm;
     }
 

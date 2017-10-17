@@ -28,6 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
+import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
 import org.ccsds.moims.mo.com.COMHelper;
 import org.ccsds.moims.mo.com.COMService;
@@ -67,7 +68,6 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
     private COMServicesProvider comServices; 
     private Long loginInstanceId;
     private Long loginEventId;
-    private final Subject currentUser;
     
     /**
      * Initialize the security manager
@@ -75,10 +75,6 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
     public LoginProviderServiceImpl() {
         // init the SecurityManager
         LoginServiceSecurityUtils.initSecurityManager();
-        // get the currently executing user  
-        this.currentUser = SecurityUtils.getSubject();
-        // keep the currentUser for accessControl processing 
-        LoginServiceSecurityUtils.setSubject(currentUser);
     }
     
     /**
@@ -164,14 +160,22 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
             throw new MALInteractionException(new MALStandardError(COMHelper.INVALID_ERROR_NUMBER, null));
         }
         
+        Blob authId = LoginServiceSecurityUtils.generateAuthId(prfl);  // 3.3.7.2.k
+  
+        // 3.3.7.2.f - username and role are currently in use
+        if (LoginServiceSecurityUtils.hasActiveSession(authId)) {
+            throw new MALInteractionException(new MALStandardError(COMHelper.DUPLICATE_ERROR_NUMBER, null));
+        }
+        
         LoginResponse response = null;
+        Subject currentUser = SecurityUtils.getSubject();
         
         // login the current user
-        if (!this.currentUser.isAuthenticated()) {
+        if (!currentUser.isAuthenticated()) {
             UsernamePasswordToken token = new UsernamePasswordToken(username.toString(), string);
             try {
-                this.currentUser.login(token);
-                if (this.currentUser.hasRole(String.valueOf(role))) {           
+                currentUser.login(token);
+                if (currentUser.hasRole(String.valueOf(role))) {           
                     // 3.3.3.b - LoginRole
                     IdentifierList objs = new IdentifierList();
                     objs.add(new Identifier(String.valueOf(role)));
@@ -204,10 +208,11 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                             null, // 3.3.4.f
                             mali);
                     this.loginEventId = loginEvent;
-                    Blob authId = LoginServiceSecurityUtils.generateAuthId(prfl);  // 3.3.7.2.k
-                    response = new LoginResponse(authId, loginInstanceId); // 3.3.7.2.l 
+                    response = new LoginResponse(authId, loginInstanceId); // 3.3.7.2.l
+                    Session session = currentUser.getSession();
+                    session.setAttribute(authId, username.getValue());
                 } else {
-                    this.currentUser.logout();
+                    currentUser.logout();
                 }
             } catch (UnknownAccountException uae) {
                 // 3.3.7.2.e - unknown user
@@ -215,9 +220,6 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
             } catch (IncorrectCredentialsException ice) {
                 // 3.3.7.2.e - username, password are not correct
                 throw new MALInteractionException(new MALStandardError(MALHelper.UNKNOWN_ERROR_NUMBER, null));
-            } catch (ConcurrentAccessException cae) {
-                // 3.3.7.2.f - username and role are currently in use
-                throw new MALInteractionException(new MALStandardError(COMHelper.DUPLICATE_ERROR_NUMBER, null));
             } catch (ExcessiveAttemptsException eae) {
                 // 3.3.7.2.g - too many attempts to login
                 throw new MALInteractionException(new MALStandardError(MALHelper.TOO_MANY_ERROR_NUMBER, null));
@@ -231,8 +233,9 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
     @Override
     public void logout(MALInteraction mali) throws MALInteractionException, MALException {
         
+        Subject currentUser = SecurityUtils.getSubject();
         // logout the user - 3.3.8.2.a
-        this.currentUser.logout();
+        currentUser.logout();
         
         ObjectKey key = new ObjectKey(
                 this.connection.getPrimaryConnectionDetails().getDomain(), 
@@ -276,6 +279,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
     @Override
     public HandoverResponse handover(Profile prfl, String string, MALInteraction mali) throws MALInteractionException, MALException {
         
+        Subject currentUser = SecurityUtils.getSubject();
         // 3.3.10.2.a
         if (prfl == null) {
             throw new IllegalArgumentException("profile argument must not be null");
@@ -298,11 +302,11 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
         
         HandoverResponse response = null;
         
-        if (this.currentUser.isAuthenticated()
+        if (currentUser.isAuthenticated()
                 && LoginServiceSecurityUtils.isUser(username.getValue(), string)) {
             // check if this is a change of role for the current user
-            if (this.currentUser.getPrincipals().getPrimaryPrincipal().equals(username.toString())) {
-                if (this.currentUser.hasRole(String.valueOf(role))) {
+            if (currentUser.getPrincipals().getPrimaryPrincipal().equals(username.toString())) {
+                if (currentUser.hasRole(String.valueOf(role))) {
                     IdentifierList objs = new IdentifierList();
                     objs.add(new Identifier(String.valueOf(role)));
                     LongList roleIds = this.comServices.getArchiveService().store(true,
@@ -324,7 +328,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                 this.logout(mali);
                 UsernamePasswordToken token = new UsernamePasswordToken(username.toString(), string);
                 try {
-                    this.currentUser.login(token);
+                    currentUser.login(token);
                     // LoginRole
                     IdentifierList objs = new IdentifierList();
                     objs.add(new Identifier(String.valueOf(role)));

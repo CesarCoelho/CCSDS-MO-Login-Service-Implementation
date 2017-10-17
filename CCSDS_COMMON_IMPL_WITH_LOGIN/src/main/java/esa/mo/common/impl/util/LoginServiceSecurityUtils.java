@@ -21,19 +21,26 @@
 package esa.mo.common.impl.util;
 
 import esa.mo.helpertools.helpers.HelperMisc;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.credential.DefaultPasswordService;
 import org.apache.shiro.config.IniSecurityManagerFactory;
+import org.apache.shiro.mgt.DefaultSecurityManager;
 import org.apache.shiro.mgt.RealmSecurityManager;
+import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.realm.text.IniRealm;
-import org.apache.shiro.subject.Subject;
+import org.apache.shiro.session.mgt.DefaultSessionManager;
+import org.apache.shiro.session.Session;
 import org.apache.shiro.util.Factory;
 import org.ccsds.moims.mo.common.login.structures.Profile;
 import org.ccsds.moims.mo.mal.structures.Blob;
@@ -45,7 +52,7 @@ import org.ccsds.moims.mo.mal.structures.LongList;
  */
 public class LoginServiceSecurityUtils {
     
-    private static Subject currentUser;
+    private static boolean securityManagerHasBeenSet = false;
     
     /**
      * Initialize Security Manager
@@ -56,29 +63,19 @@ public class LoginServiceSecurityUtils {
         if (config == null) {
             config = "classpath:shiro.ini";
         }
-        Factory<org.apache.shiro.mgt.SecurityManager> factory
+        Factory<SecurityManager> factory
                 = new IniSecurityManagerFactory(config);
-        org.apache.shiro.mgt.SecurityManager securityManager = factory.getInstance();
+        SecurityManager securityManager = factory.getInstance();
         // set the SecurityManager
         SecurityUtils.setSecurityManager(securityManager);        
     }
     
     /**
-     * Sets the current executing user
      * 
-     * @param subject
+     * @return true if the security manager is set; false otherwise
      */
-    public static void setSubject(Subject subject) {
-       currentUser = subject;
-    }
-    
-    /**
-     * Returns the current executing user
-     * 
-     * @return currentUser
-     */
-    public static Subject getSubject() {
-        return currentUser;
+    public static boolean isSecurityManagerSet() {
+        return securityManagerHasBeenSet;
     }
     
     /**
@@ -97,6 +94,55 @@ public class LoginServiceSecurityUtils {
             }
         }
         return null;
+    }
+    
+    /**
+     *
+     * @return all active sessions
+     */
+    private static Collection getActiveSessions() {
+        if (securityManagerHasBeenSet) {
+            try {
+                DefaultSecurityManager securityManager
+                        = (DefaultSecurityManager) SecurityUtils.getSecurityManager();
+                DefaultSessionManager sessionManager
+                        = (DefaultSessionManager) securityManager.getSessionManager();
+                Method getActiveSessionsMethod = DefaultSessionManager.class.getDeclaredMethod("getActiveSessions");
+                getActiveSessionsMethod.setAccessible(true);
+                Collection<Session> activeSessions = (Collection) getActiveSessionsMethod.invoke(sessionManager);
+                return activeSessions;
+            } catch (NoSuchMethodException ex) {
+                Logger.getLogger(LoginServiceSecurityUtils.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (SecurityException ex) {
+                Logger.getLogger(LoginServiceSecurityUtils.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IllegalAccessException ex) {
+                Logger.getLogger(LoginServiceSecurityUtils.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IllegalArgumentException ex) {
+                Logger.getLogger(LoginServiceSecurityUtils.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (InvocationTargetException ex) {
+                Logger.getLogger(LoginServiceSecurityUtils.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Checks for a session with the given authId
+     *
+     * @param authId
+     * @return true if the session exists; false otherwise
+     */
+    public static boolean hasActiveSession(Blob authId) {
+        Collection<Session> activeSessions = getActiveSessions();
+        if(activeSessions == null) {
+            return false;
+        }
+        for (Session session : activeSessions) {
+            if (session.getAttribute(authId) != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -182,7 +228,6 @@ public class LoginServiceSecurityUtils {
      * @return authentication id
      */
     public static Blob generateAuthId(Profile prfl) {
-        
         // authId = username + role
         byte[] value0 = prfl.getUsername().getValue().getBytes((Charset.forName("UTF-16")));
         byte value1 = prfl.getRole().byteValue();
