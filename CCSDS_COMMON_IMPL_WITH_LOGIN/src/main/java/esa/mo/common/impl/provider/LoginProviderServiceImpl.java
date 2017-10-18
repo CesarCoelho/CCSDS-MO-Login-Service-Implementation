@@ -69,9 +69,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
     private boolean running = false;
     private final ConnectionProvider connection = new ConnectionProvider();
     private COMServicesProvider comServices; 
-    private Long loginInstanceId;
-    private Long loginEventId;
-    private HashMap<Blob,ArrayList> loginInstances;
+    private HashMap<Blob,ArrayList> loginInstances = new HashMap();;
     
     /**
      * Initialize the security manager
@@ -79,7 +77,6 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
     public LoginProviderServiceImpl() {
         // init the SecurityManager
         LoginServiceSecurityUtils.initSecurityManager();
-        this.loginInstances = new HashMap();
     }
     
     /**
@@ -208,7 +205,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                             profiles,
                             mali);
                     ArrayList ids = new ArrayList();
-                    ids.add(loginInstanceIds.get(0));
+                    ids.add(0,loginInstanceIds.get(0));
                     // 3.3.7.2.j - LoginEvent
                     Long loginEvent = this.comServices.getEventService().generateAndStoreEvent(
                             LoginHelper.LOGINEVENT_OBJECT_TYPE,
@@ -217,9 +214,9 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                             loginInstanceIds.get(0), // 3.3.4.d
                             null, // 3.3.4.f
                             mali);
-                    ids.add(loginEvent);
+                    ids.add(1,loginEvent);
                     loginInstances.put(authId, ids);                   
-                    response = new LoginResponse(authId, loginInstanceId); // 3.3.7.2.l
+                    response = new LoginResponse(authId, loginInstanceIds.get(0)); // 3.3.7.2.l
                     Session session = currentUser.getSession();
                     session.setAttribute(authId, role);
                     LoginServiceSecurityUtils.decreaseRoleAvailability(role);
@@ -242,39 +239,45 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
 
     @Override
     public void logout(MALInteraction mali) throws MALInteractionException, MALException {
-        
+        System.out.println("a");
         Subject currentUser = SecurityUtils.getSubject();
         // retrieve all the session keys for the current user
         Collection sessionKeys = currentUser.getSession().getAttributeKeys();
-        Blob authId = null;
-        for (Object key : sessionKeys) {
+        for (Object sessionKey : sessionKeys) {
+            System.out.println(sessionKey);
             // get the authId key set in the login operation
-            if (key.getClass().equals(Blob.class)) {
+            if (sessionKey.getClass().equals(Blob.class)) {
                 // get the value of key, which is the role
-                authId = (Blob) key;
-                Long role = (Long) currentUser.getSession().getAttribute(key);
+                Blob authId = (Blob) sessionKey;
+                ArrayList instanceIds = loginInstances.get(authId);
+                
+                Long role = (Long) currentUser.getSession().getAttribute(sessionKey);
                 LoginServiceSecurityUtils.increaseRoleAvailability(role);
+                
+                ObjectKey key = new ObjectKey(
+                        this.connection.getPrimaryConnectionDetails().getDomain(),
+                        (Long) instanceIds.get(1));
+                ObjectType type = LoginHelper.LOGINEVENT_OBJECT_TYPE;
+                ObjectId objId = new ObjectId(type, key);
+
+                // 3.3.8.2.b - LogoutEvent
+                Long logoutEvent = this.comServices.getEventService().generateAndStoreEvent(
+                        LoginHelper.LOGOUTEVENT_OBJECT_TYPE,
+                        connection.getPrimaryConnectionDetails().getDomain(),
+                        null,
+                        (Long) instanceIds.get(0), // 3.3.4.e
+                        objId, // 3.3.4.g
+                        mali);
+
+                // logout the user - 3.3.8.2.a
+                currentUser.getSession().removeAttribute(sessionKey);
+                currentUser.getSession().stop();
+                currentUser.logout();
+
+                loginInstances.remove(authId);
             }
         }
-        ArrayList instanceIds = loginInstances.get(authId);
-        // logout the user - 3.3.8.2.a
-        currentUser.logout();
-        loginInstances.remove(authId);
-        
-        ObjectKey key = new ObjectKey(
-                this.connection.getPrimaryConnectionDetails().getDomain(),
-                (Long) instanceIds.get(1));
-        ObjectType type = LoginHelper.LOGINEVENT_OBJECT_TYPE;
-        ObjectId objId = new ObjectId(type, key);
-
-        // 3.3.8.2.b - LogoutEvent
-        Long logoutEvent = this.comServices.getEventService().generateAndStoreEvent(
-                LoginHelper.LOGOUTEVENT_OBJECT_TYPE,
-                connection.getPrimaryConnectionDetails().getDomain(),
-                null,
-                (Long) instanceIds.get(0), // 3.3.4.e
-                objId, // 3.3.4.g
-                mali);
+            
     }
 
     @Override
@@ -365,7 +368,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                                     this.connection.getPrimaryConnectionDetails().getProviderURI()),
                             objs,
                             mali);
-                    response = new HandoverResponse(authId, this.loginInstanceId);
+                    response = new HandoverResponse(authId, (Long) instancesIds.get(0));
                     LoginServiceSecurityUtils.decreaseRoleAvailability(role);
                 } else {
                     // the role is not correct - 3.3.10.2.e
@@ -410,7 +413,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                             profiles,
                             mali);
                     ArrayList ids = new ArrayList();
-                    ids.add(loginInstanceIds.get(0));
+                    ids.add(0,loginInstanceIds.get(0));
                     // 3.3.4.c
                     Long loginEvent = this.comServices.getEventService().generateAndStoreEvent(
                             LoginHelper.LOGINEVENT_OBJECT_TYPE,
@@ -419,7 +422,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                             (Long) instancesIds.get(0),
                             null,
                             mali);
-                    ids.add(loginEvent);
+                    ids.add(1,loginEvent);
                     response = new HandoverResponse(authId, loginInstanceIds.get(0)); // 3.3.10.2.l, 3.3.10.2.m
                     LoginServiceSecurityUtils.decreaseRoleAvailability(role);
                 } catch (UnknownAccountException uae) {
