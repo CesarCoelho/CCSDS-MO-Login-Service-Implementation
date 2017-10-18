@@ -24,6 +24,9 @@ import esa.mo.com.impl.util.COMServicesProvider;
 import esa.mo.com.impl.util.HelperArchive;
 import esa.mo.common.impl.util.LoginServiceSecurityUtils;
 import esa.mo.helpertools.connections.ConnectionProvider;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.shiro.SecurityUtils;
@@ -55,7 +58,7 @@ import org.ccsds.moims.mo.mal.structures.IdentifierList;
 import org.ccsds.moims.mo.mal.structures.LongList;
 
 /**
- *
+ *  @author Andreea Pirvulescu
  */
 public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
 
@@ -68,6 +71,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
     private COMServicesProvider comServices; 
     private Long loginInstanceId;
     private Long loginEventId;
+    private HashMap<Blob,ArrayList> loginInstances;
     
     /**
      * Initialize the security manager
@@ -75,6 +79,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
     public LoginProviderServiceImpl() {
         // init the SecurityManager
         LoginServiceSecurityUtils.initSecurityManager();
+        this.loginInstances = new HashMap();
     }
     
     /**
@@ -116,7 +121,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
         loginServiceProvider = connection.startService(LoginHelper.LOGIN_SERVICE_NAME.toString(), 
                 LoginHelper.LOGIN_SERVICE, false, this);
         this.comServices = comServices;
-
+        
         running = true;
         initialiased = true;
         Logger.getLogger(LoginProviderServiceImpl.class.getName()).info("Login service READY");
@@ -166,7 +171,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
         if (LoginServiceSecurityUtils.hasActiveSession(authId)) {
             throw new MALInteractionException(new MALStandardError(COMHelper.DUPLICATE_ERROR_NUMBER, null));
         }
-        
+            
         LoginResponse response = null;
         Subject currentUser = SecurityUtils.getSubject();
         
@@ -175,7 +180,11 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
             UsernamePasswordToken token = new UsernamePasswordToken(username.toString(), string);
             try {
                 currentUser.login(token);
-                if (currentUser.hasRole(String.valueOf(role))) {           
+                if (currentUser.hasRole(String.valueOf(role))) {
+                    // 3.3.7.2.g - the limit for the given role was reached
+                    if (!LoginServiceSecurityUtils.checkRoleAvailability(role)) {
+                        throw new MALInteractionException(new MALStandardError(MALHelper.TOO_MANY_ERROR_NUMBER, null));
+                    }
                     // 3.3.3.b - LoginRole
                     IdentifierList objs = new IdentifierList();
                     objs.add(new Identifier(String.valueOf(role)));
@@ -198,20 +207,24 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                                     this.connection.getPrimaryConnectionDetails().getProviderURI()),
                             profiles,
                             mali);
-                    this.loginInstanceId = loginInstanceIds.get(0);              
+                    ArrayList ids = new ArrayList();
+                    ids.add(loginInstanceIds.get(0));
                     // 3.3.7.2.j - LoginEvent
                     Long loginEvent = this.comServices.getEventService().generateAndStoreEvent(
                             LoginHelper.LOGINEVENT_OBJECT_TYPE,
                             this.connection.getPrimaryConnectionDetails().getDomain(),
                             null,
-                            loginInstanceId, // 3.3.4.d
+                            loginInstanceIds.get(0), // 3.3.4.d
                             null, // 3.3.4.f
                             mali);
-                    this.loginEventId = loginEvent;
+                    ids.add(loginEvent);
+                    loginInstances.put(authId, ids);                   
                     response = new LoginResponse(authId, loginInstanceId); // 3.3.7.2.l
                     Session session = currentUser.getSession();
-                    session.setAttribute(authId, username.getValue());
+                    session.setAttribute(authId, role);
+                    LoginServiceSecurityUtils.decreaseRoleAvailability(role);
                 } else {
+                    LoginServiceSecurityUtils.increaseRoleAvailability(role);
                     currentUser.logout();
                 }
             } catch (UnknownAccountException uae) {
@@ -220,9 +233,6 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
             } catch (IncorrectCredentialsException ice) {
                 // 3.3.7.2.e - username, password are not correct
                 throw new MALInteractionException(new MALStandardError(MALHelper.UNKNOWN_ERROR_NUMBER, null));
-            } catch (ExcessiveAttemptsException eae) {
-                // 3.3.7.2.g - too many attempts to login
-                throw new MALInteractionException(new MALStandardError(MALHelper.TOO_MANY_ERROR_NUMBER, null));
             } catch (AuthenticationException ae) {
                 //unexpected condition?  error?
             }
@@ -234,12 +244,26 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
     public void logout(MALInteraction mali) throws MALInteractionException, MALException {
         
         Subject currentUser = SecurityUtils.getSubject();
+        // retrieve all the session keys for the current user
+        Collection sessionKeys = currentUser.getSession().getAttributeKeys();
+        Blob authId = null;
+        for (Object key : sessionKeys) {
+            // get the authId key set in the login operation
+            if (key.getClass().equals(Blob.class)) {
+                // get the value of key, which is the role
+                authId = (Blob) key;
+                Long role = (Long) currentUser.getSession().getAttribute(key);
+                LoginServiceSecurityUtils.increaseRoleAvailability(role);
+            }
+        }
+        ArrayList instanceIds = loginInstances.get(authId);
         // logout the user - 3.3.8.2.a
         currentUser.logout();
+        loginInstances.remove(authId);
         
         ObjectKey key = new ObjectKey(
-                this.connection.getPrimaryConnectionDetails().getDomain(), 
-                this.loginEventId);
+                this.connection.getPrimaryConnectionDetails().getDomain(),
+                (Long) instanceIds.get(1));
         ObjectType type = LoginHelper.LOGINEVENT_OBJECT_TYPE;
         ObjectId objId = new ObjectId(type, key);
 
@@ -248,7 +272,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                 LoginHelper.LOGOUTEVENT_OBJECT_TYPE,
                 connection.getPrimaryConnectionDetails().getDomain(),
                 null,
-                this.loginInstanceId, // 3.3.4.e
+                (Long) instanceIds.get(0), // 3.3.4.e
                 objId, // 3.3.4.g
                 mali);
     }
@@ -280,6 +304,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
     public HandoverResponse handover(Profile prfl, String string, MALInteraction mali) throws MALInteractionException, MALException {
         
         Subject currentUser = SecurityUtils.getSubject();
+        
         // 3.3.10.2.a
         if (prfl == null) {
             throw new IllegalArgumentException("profile argument must not be null");
@@ -300,13 +325,36 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
         
         Blob authId = LoginServiceSecurityUtils.generateAuthId(prfl); // 3.3.10.2.l
         
+        // 3.3.10.2.f - username and role are currently in use
+        if (LoginServiceSecurityUtils.hasActiveSession(authId)) {
+            throw new MALInteractionException(new MALStandardError(COMHelper.DUPLICATE_ERROR_NUMBER, null));
+        }
+        
         HandoverResponse response = null;
+         
+        // retrieve all the session keys for the current user
+        Collection sessionKeys = currentUser.getSession().getAttributeKeys();
+        Blob previousAuthId = null;
+        for (Object key : sessionKeys) {
+            // get the authId key set in the login operation
+            if (key.getClass().equals(Blob.class)) {
+                // get the value of key, which is the role
+                previousAuthId = (Blob) key;
+                Long previousRole = (Long) currentUser.getSession().getAttribute(key);
+            }
+        }
+        
+        ArrayList instancesIds = loginInstances.get(previousAuthId);
         
         if (currentUser.isAuthenticated()
                 && LoginServiceSecurityUtils.isUser(username.getValue(), string)) {
             // check if this is a change of role for the current user
             if (currentUser.getPrincipals().getPrimaryPrincipal().equals(username.toString())) {
                 if (currentUser.hasRole(String.valueOf(role))) {
+                    if (!LoginServiceSecurityUtils.checkRoleAvailability(role)) {
+                        // 3.3.10.2.g
+                        throw new MALInteractionException(new MALStandardError(MALHelper.TOO_MANY_ERROR_NUMBER, null));
+                    }
                     IdentifierList objs = new IdentifierList();
                     objs.add(new Identifier(String.valueOf(role)));
                     LongList roleIds = this.comServices.getArchiveService().store(true,
@@ -318,12 +366,17 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                             objs,
                             mali);
                     response = new HandoverResponse(authId, this.loginInstanceId);
+                    LoginServiceSecurityUtils.decreaseRoleAvailability(role);
                 } else {
                     // the role is not correct - 3.3.10.2.e
                     throw new MALInteractionException(new MALStandardError(MALHelper.UNKNOWN_ERROR_NUMBER, null));
                 }
             // change of user
             } else if (LoginServiceSecurityUtils.hasRole(username.getValue(), String.valueOf(role))) {
+                if (!LoginServiceSecurityUtils.checkRoleAvailability(role)) {
+                    // 3.3.10.2.g
+                    throw new MALInteractionException(new MALStandardError(MALHelper.TOO_MANY_ERROR_NUMBER, null));
+                }
                 // logout the current user - 3.3.4.c
                 this.logout(mali);
                 UsernamePasswordToken token = new UsernamePasswordToken(username.toString(), string);
@@ -342,7 +395,7 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                             mali);
                     ObjectKey key = new ObjectKey(
                             this.connection.getPrimaryConnectionDetails().getDomain(),
-                            this.loginInstanceId);
+                            (Long) instancesIds.get(1));
                     ObjectType type = LoginHelper.LOGININSTANCE_OBJECT_TYPE;
                     ObjectId objId = new ObjectId(type, key);
                     // 3.3.10.2.i - LoginInstance
@@ -356,29 +409,25 @@ public class LoginProviderServiceImpl extends LoginInheritanceSkeleton {
                                     this.connection.getPrimaryConnectionDetails().getProviderURI()),
                             profiles,
                             mali);
-                    this.loginInstanceId = loginInstanceIds.get(0);
+                    ArrayList ids = new ArrayList();
+                    ids.add(loginInstanceIds.get(0));
                     // 3.3.4.c
                     Long loginEvent = this.comServices.getEventService().generateAndStoreEvent(
                             LoginHelper.LOGINEVENT_OBJECT_TYPE,
                             this.connection.getPrimaryConnectionDetails().getDomain(),
                             null,
-                            loginInstanceId,
+                            (Long) instancesIds.get(0),
                             null,
                             mali);
-                    this.loginEventId = loginEvent;
+                    ids.add(loginEvent);
                     response = new HandoverResponse(authId, loginInstanceIds.get(0)); // 3.3.10.2.l, 3.3.10.2.m
+                    LoginServiceSecurityUtils.decreaseRoleAvailability(role);
                 } catch (UnknownAccountException uae) {
                     // 3.3.10.2.e - unknown user
                     throw new MALInteractionException(new MALStandardError(MALHelper.UNKNOWN_ERROR_NUMBER, null));
                 } catch (IncorrectCredentialsException ice) {
                     // 3.3.7.10.e - username, password are not correct
                     throw new MALInteractionException(new MALStandardError(MALHelper.UNKNOWN_ERROR_NUMBER, null));
-                } catch (ConcurrentAccessException cae) {
-                    // 3.3.10.2.f - username and role are currently in use
-                    throw new MALInteractionException(new MALStandardError(COMHelper.DUPLICATE_ERROR_NUMBER, null));
-                } catch (ExcessiveAttemptsException eae) {
-                    // 3.3.10.2.g - too many attempts
-                    throw new MALInteractionException(new MALStandardError(MALHelper.TOO_MANY_ERROR_NUMBER, null));
                 } catch (AuthenticationException ae) {
                     //unexpected condition?  error?
                 }

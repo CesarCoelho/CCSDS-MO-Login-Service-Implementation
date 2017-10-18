@@ -26,6 +26,7 @@ import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -52,8 +53,10 @@ import org.ccsds.moims.mo.mal.structures.LongList;
  */
 public class LoginServiceSecurityUtils {
     
+    private final static int MAX_USERS_FOR_A_ROLE = 2;
     private static boolean securityManagerHasBeenSet = false;
-    
+    private static Map<Long, Integer> rolesAvailability;
+
     /**
      * Initialize Security Manager
      */
@@ -67,7 +70,10 @@ public class LoginServiceSecurityUtils {
                 = new IniSecurityManagerFactory(config);
         SecurityManager securityManager = factory.getInstance();
         // set the SecurityManager
-        SecurityUtils.setSecurityManager(securityManager);        
+        SecurityUtils.setSecurityManager(securityManager);
+        securityManagerHasBeenSet = true;
+        // initialize the available roles
+        assignRolesAvailability();
     }
     
     /**
@@ -197,10 +203,10 @@ public class LoginServiceSecurityUtils {
     }
 
     /**
-     * Returns the roles for a certain user
-     *
+     * Returns the roles for a certain user; if the
+     * username is "", returns all the possible roles
      * @param username
-     * @return roles that match user with username
+     * @return roles
      */
     public static LongList getRoles(String username) {
         Realm realm = getRealm();
@@ -212,7 +218,9 @@ public class LoginServiceSecurityUtils {
             Iterator it = allRoles.entrySet().iterator();
             while (it.hasNext()) {
                 Map.Entry pair = (Map.Entry) it.next();
-                if (hasRole(username, (String) pair.getKey())) {
+                if (username.equals("")) {
+                    roles.add(Long.valueOf((String) pair.getKey()));
+                } else if (hasRole(username, (String) pair.getKey())) {
                     roles.add(Long.valueOf((String) pair.getKey()));
                 }
             }
@@ -221,6 +229,47 @@ public class LoginServiceSecurityUtils {
         return null;
     }
     
+    /**
+     * Initialize roles usage with 0
+     */
+    public static void assignRolesAvailability() {
+        rolesAvailability = new HashMap();
+        LongList allRoles = getRoles("");
+        for (Long role : allRoles) {
+            rolesAvailability.put(role, 0);
+        }
+    }
+    
+    /**
+     * Checks if the limit of users for a role has been reached
+     * 
+     * @param role
+     * @return 
+     */
+    public static boolean checkRoleAvailability(Long role) {
+        return rolesAvailability.get(role) != MAX_USERS_FOR_A_ROLE;
+    }
+    
+    /**
+     * Decreases the role availability by updating the number 
+     * of users that logged in with the given role
+     * 
+     * @param role
+     */
+    public static void decreaseRoleAvailability(Long role) {
+        rolesAvailability.put(role, rolesAvailability.get(role) + 1);
+    }
+    
+    /**
+     * Increases the role availability by updating the number 
+     * of users that logged out from the given role
+     * 
+     * @param role
+     */
+    public static void increaseRoleAvailability(Long role) {
+        rolesAvailability.put(role, rolesAvailability.get(role) - 1);
+    }
+            
     /**
      * Generates an authentication id
      * 
