@@ -21,15 +21,13 @@
 package esa.mo.common.impl.util;
 
 import esa.mo.helpertools.helpers.HelperMisc;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.shiro.SecurityUtils;
@@ -55,8 +53,7 @@ public class LoginServiceSecurityUtils {
     
     private final static int MAX_USERS_FOR_A_ROLE = 2;
     private static boolean securityManagerHasBeenSet = false;
-    private static Map<Long, Integer> rolesAvailability;
-
+   
     /**
      * Initialize Security Manager
      */
@@ -73,7 +70,6 @@ public class LoginServiceSecurityUtils {
         SecurityUtils.setSecurityManager(securityManager);
         securityManagerHasBeenSet = true;
         // initialize the available roles
-        assignRolesAvailability();
     }
     
     /**
@@ -106,26 +102,25 @@ public class LoginServiceSecurityUtils {
      *
      * @return all active sessions
      */
-    private static Collection getActiveSessions() {
+    public static Collection getActiveSessions() {
         if (securityManagerHasBeenSet) {
             try {
                 DefaultSecurityManager securityManager
                         = (DefaultSecurityManager) SecurityUtils.getSecurityManager();
                 DefaultSessionManager sessionManager
                         = (DefaultSessionManager) securityManager.getSessionManager();
-                Method getActiveSessionsMethod = DefaultSessionManager.class.getDeclaredMethod("getActiveSessions");
-                getActiveSessionsMethod.setAccessible(true);
-                Collection<Session> activeSessions = (Collection) getActiveSessionsMethod.invoke(sessionManager);
+                Collection<Session> activeSessions = sessionManager.getSessionDAO().getActiveSessions();
+                for (Session s : activeSessions) {
+                    Collection<Object> attributes = s.getAttributeKeys();
+                    for (Object a : attributes) {
+                        System.out.println("ID: "+ s.getId() + " atribut " + s.getAttribute(a));
+                    }
+                    System.out.println();
+                }
                 return activeSessions;
-            } catch (NoSuchMethodException ex) {
-                Logger.getLogger(LoginServiceSecurityUtils.class.getName()).log(Level.SEVERE, null, ex);
             } catch (SecurityException ex) {
                 Logger.getLogger(LoginServiceSecurityUtils.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (IllegalAccessException ex) {
-                Logger.getLogger(LoginServiceSecurityUtils.class.getName()).log(Level.SEVERE, null, ex);
             } catch (IllegalArgumentException ex) {
-                Logger.getLogger(LoginServiceSecurityUtils.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (InvocationTargetException ex) {
                 Logger.getLogger(LoginServiceSecurityUtils.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -144,11 +139,30 @@ public class LoginServiceSecurityUtils {
             return false;
         }
         for (Session session : activeSessions) {
-            if (session.getAttribute(authId) != null) {
+            if (session.getAttribute("authId") == authId) {
                 return true;
             }
         }
         return false;
+    }
+    
+    /**
+     * Returns a session with the given sessionId
+     * 
+     * @param sessionId
+     * @return session with requested id; null otherwise
+     */
+    public static Session getSession(Object sessionId) {
+        Collection<Session> activeSessions = getActiveSessions();
+        if (activeSessions == null) {
+            return null;
+        }
+        for (Session session : activeSessions) {
+            if (session.getId().equals(sessionId)) {
+                return session;
+            }
+        }
+        return null;
     }
 
     /**
@@ -231,9 +245,9 @@ public class LoginServiceSecurityUtils {
     
     /**
      * Initialize roles usage with 0
+     * @param rolesAvailability
      */
-    public static void assignRolesAvailability() {
-        rolesAvailability = new HashMap();
+    public static void assignRolesAvailability(Map<Long, Integer> rolesAvailability) {
         LongList allRoles = getRoles("");
         for (Long role : allRoles) {
             rolesAvailability.put(role, 0);
@@ -243,10 +257,11 @@ public class LoginServiceSecurityUtils {
     /**
      * Checks if the limit of users for a role has been reached
      * 
+     * @param rolesAvailability
      * @param role
      * @return 
      */
-    public static boolean checkRoleAvailability(Long role) {
+    public static boolean checkRoleAvailability(Map<Long, Integer> rolesAvailability, Long role) {
         return rolesAvailability.get(role) != MAX_USERS_FOR_A_ROLE;
     }
     
@@ -254,20 +269,26 @@ public class LoginServiceSecurityUtils {
      * Decreases the role availability by updating the number 
      * of users that logged in with the given role
      * 
+     * @param rolesAvailability
      * @param role
      */
-    public static void decreaseRoleAvailability(Long role) {
+    public static void decreaseRoleAvailability(Map<Long, Integer> rolesAvailability, Long role) {
+        System.out.println("I am role " + role + " and I have decreased role availability");
         rolesAvailability.put(role, rolesAvailability.get(role) + 1);
+        System.out.println(rolesAvailability.get(role));
     }
     
     /**
      * Increases the role availability by updating the number 
      * of users that logged out from the given role
      * 
+     * @param rolesAvailability
      * @param role
      */
-    public static void increaseRoleAvailability(Long role) {
+    public static void increaseRoleAvailability(Map<Long, Integer> rolesAvailability, Long role) {
+        System.out.println("I am role " + role + " and I have increased role availability");
         rolesAvailability.put(role, rolesAvailability.get(role) - 1);
+        System.out.println(rolesAvailability.get(role));
     }
             
     /**
@@ -284,6 +305,7 @@ public class LoginServiceSecurityUtils {
         byte[] value = new byte[value0.length + 1];
         System.arraycopy(value0, 0, value, 0, value0.length);
         value[value0.length] = value1;
+
         Blob authId = new Blob(value);
 
         return authId;
